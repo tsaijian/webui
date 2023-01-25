@@ -61,7 +61,7 @@ describe('SystemDatasetPoolComponent', () => {
   it('loads and shows current system dataset pool', async () => {
     spectator.component.setFormForEdit({
       pool: 'current-pool',
-      swapondrive: '5368709120',
+      swapondrive: '5',
     });
     spectator.detectChanges();
     const form = await loader.getHarness(IxFormHarness);
@@ -87,7 +87,7 @@ describe('SystemDatasetPoolComponent', () => {
     expect(ws.job).toHaveBeenCalledWith('systemdataset.update', [{
       pool: 'new-pool',
     }]);
-    expect(ws.call).toHaveBeenCalledWith('system.advanced.update', [{ swapondrive: 4294967296 }]);
+    expect(ws.call).toHaveBeenCalledWith('system.advanced.update', [{ swapondrive: 4 }]);
   });
 
   it('should warns user about restarting an SMB service when it is running and form is saved', async () => {
