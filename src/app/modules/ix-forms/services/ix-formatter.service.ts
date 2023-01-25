@@ -9,13 +9,19 @@ export class IxFormatterService {
    * @param value The string to be formatted
    * @returns Formatted string
    */
-  memorySizeFormatting: (val: string | number) => string = (value: string | number) => {
-    if (!value) {
-      return '';
-    }
-    value = value.toString();
-    return !value || Number.isNaN(Number(value)) ? '' : this.convertBytesToHumanReadable(value, 0);
-  };
+  memorySizeFormatting: (
+    val: string | number,
+    maxUnit?: 'B' | 'KiB' | 'MiB' | 'GiB' | 'TiB' | 'PiB'
+  ) => string = (
+      value: string | number,
+      maxUnit?: 'B' | 'KiB' | 'MiB' | 'GiB' | 'TiB' | 'PiB',
+    ) => {
+      if (!value) {
+        return '';
+      }
+      value = value.toString();
+      return !value || Number.isNaN(Number(value)) ? '' : this.convertBytesToHumanReadable(value, 0, null, null, maxUnit);
+    };
 
   /**
    * Parses passed in human readable memory size string into a normalized value.
@@ -45,6 +51,7 @@ export class IxFormatterService {
     decimalPlaces?: number,
     minUnits?: string,
     hideBytes?: boolean,
+    maxUnit?: 'B' | 'KiB' | 'MiB' | 'GiB' | 'TiB' | 'PiB',
   ): string => {
     let i = 0;
     let units;
@@ -52,10 +59,11 @@ export class IxFormatterService {
 
     const dec = decimalPlaces !== undefined ? decimalPlaces : 2;
     if (bytes >= 1024) {
+      const stopIndex = maxUnit ? this.iecUnits.findIndex((unit) => unit === maxUnit) : 4;
       do {
         bytes = bytes / 1024;
         i++;
-      } while (bytes >= 1024 && i < 4);
+      } while (bytes >= 1024 && i < stopIndex);
       units = this.iecUnits[i];
     } else if (minUnits) {
       units = minUnits;

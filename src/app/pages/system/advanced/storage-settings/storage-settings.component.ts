@@ -53,6 +53,11 @@ export class StorageSettingsComponent {
     public ixFormatter: IxFormatterService,
   ) {}
 
+  formatToGibs = (value: string): string => {
+    value = (+value * this.ixFormatter.convertUnitToNum('GiB')).toString();
+    return this.ixFormatter.memorySizeFormatting(value, 'GiB');
+  };
+
   onSubmit(): void {
     const values = this.form.value;
 
