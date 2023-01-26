@@ -120,8 +120,8 @@
         <!-- DETAILS OVERLAY -->
         <div *ngIf="currentView === 'details' || exitingView === 'details'" class="details stage-left dom-overlay">
           <div class="content">
-            <h1 class="disk-name {{ selectedDisk.name }}">
-              {{ selectedDisk.name }}
+            <h1 class="disk-name {{ selectedDisk?.name }}">
+              {{ selectedDisk?.name }}
             </h1>
             <div class="title">
               <span class="semibold">{{ 'vdev' | translate }}: </span>
@@ -141,7 +141,7 @@
             </div>
             <div class="title">
               <span class="semibold">{{ 'Slot' | translate }}: </span>
-              <span>{{ selectedDisk.enclosure.slot }}</span>
+              <span>{{ selectedDisk?.enclosure.slot }}</span>
             </div>
           </div>
         </div>
