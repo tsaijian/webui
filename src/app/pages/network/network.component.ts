@@ -699,7 +699,7 @@ export class NetworkComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private openInterfaceForEditFromRoute(): void {
-    const state = this.navigation.extras.state as { editInterface: string };
+    const state = this.navigation?.extras?.state as { editInterface: string };
     if (!state?.editInterface) {
       return;
     }
