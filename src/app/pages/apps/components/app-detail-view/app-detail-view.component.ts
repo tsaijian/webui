@@ -5,9 +5,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  map, filter, BehaviorSubject, tap,
+  map, filter, BehaviorSubject, tap, combineLatest,
 } from 'rxjs';
-import { appImagePlaceholder, chartsTrain, officialCatalog } from 'app/constants/catalog.constants';
+import { appImagePlaceholder, officialCatalog } from 'app/constants/catalog.constants';
+import { AppsFiltersSort } from 'app/interfaces/apps-filters-values.interface';
 import { AvailableApp } from 'app/interfaces/available-app.interfase';
 import { ApplicationsService } from 'app/pages/apps/services/applications.service';
 import { LayoutService } from 'app/services/layout.service';
@@ -22,6 +23,9 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
   @ViewChild('pageHeader') pageHeader: TemplateRef<unknown>;
   app: AvailableApp;
   appId: string;
+  catalog: string;
+  train: string;
+  selectedAppsPool: string;
   isLoading$ = new BehaviorSubject<boolean>(false);
   readonly imagePlaceholder = appImagePlaceholder;
   readonly officialCatalog = officialCatalog;
@@ -52,12 +56,18 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
     private router: Router,
     private translate: TranslateService,
     private appService: ApplicationsService,
-  ) {
-
-  }
+  ) { }
 
   ngOnInit(): void {
     this.listenForRouteChanges();
+    this.getSelectedPool();
+  }
+
+  getSelectedPool(): void {
+    this.appService.getKubernetesConfig().pipe(untilDestroyed(this)).subscribe((config) => {
+      this.selectedAppsPool = config.pool;
+      this.cdr.markForCheck();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -65,9 +75,12 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
   }
 
   private listenForRouteChanges(): void {
-    this.activatedRoute.params
+    combineLatest([
+      this.activatedRoute.params,
+      this.activatedRoute.queryParams,
+    ])
       .pipe(
-        map((params) => params.appId as string),
+        map(([params, queryParams]) => [params.appId as string, queryParams.catalog, queryParams.train]),
         filter(Boolean),
         tap(() => {
           this.isLoading$.next(true);
@@ -75,8 +88,10 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
         }),
         untilDestroyed(this),
       )
-      .subscribe((appId) => {
+      .subscribe(([appId, catalog, train]) => {
         this.appId = appId;
+        this.catalog = catalog;
+        this.train = train;
         this.loadAppInfo();
       });
   }
@@ -84,7 +99,7 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
   private loadAppInfo(): void {
     this.isLoading$.next(true);
     this.appService
-      .getAvailableItem(this.appId, officialCatalog, chartsTrain)
+      .getAvailableItem(this.appId, this.catalog, this.train)
       .pipe(untilDestroyed(this)).subscribe({
         next: (app) => {
           this.app = app;
@@ -103,7 +118,9 @@ export class AppDetailViewComponent implements OnInit, AfterViewInit {
 
   private loadSimilarApps(): void {
     this.similarAppsLoading$.next(true);
-    this.appService.getAvailableApps().pipe(untilDestroyed(this)).subscribe({
+    this.appService.getAvailableApps(
+      { categories: [...this.app.categories], catalogs: null, sort: AppsFiltersSort.Name },
+    ).pipe(untilDestroyed(this)).subscribe({
       next: (apps) => {
         this.similarApps = apps.slice(0, 4);
         this.similarAppsLoading$.next(false);

@@ -23,6 +23,7 @@
       *ngFor="let app of filteredApps; trackBy: trackByAppId"
       [app]="app"
       [routerLink]="['/apps', 'available', app.name]"
+      [queryParams]="{ catalog: app.catalog, train: app.train }"
     ></ix-app-card>
   </div>
 </div>
@@ -38,6 +39,7 @@
           <ix-app-card
             *ngFor="let app of apps; trackBy: trackByAppId"
             [app]="app"
+            [queryParams]="{ catalog: app.catalog, train: app.train }"
             [routerLink]="['/apps', 'available', app.name]"
           ></ix-app-card>
         </div>

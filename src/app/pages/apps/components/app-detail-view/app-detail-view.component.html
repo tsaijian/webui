@@ -119,9 +119,9 @@
   <div fxFlex fxLayoutAlign="end">
 
     <section class="app-info-cards">
-      <ix-app-resources-card [isLoading$]="isLoading$"></ix-app-resources-card>
-      <ix-app-helm-chart-card [isLoading$]="isLoading$"></ix-app-helm-chart-card>
-      <ix-app-available-info-card [isLoading$]="isLoading$"></ix-app-available-info-card>
+      <ix-app-resources-card [isLoading$]="isLoading$" [app]="app" [pool]="selectedAppsPool"></ix-app-resources-card>
+      <ix-app-helm-chart-card [isLoading$]="isLoading$" [app]="app"></ix-app-helm-chart-card>
+      <ix-app-available-info-card [isLoading$]="isLoading$" [app]="app"></ix-app-available-info-card>
     </section>
 
   </div>

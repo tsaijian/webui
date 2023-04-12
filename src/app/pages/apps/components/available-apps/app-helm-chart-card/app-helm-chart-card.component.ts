@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AvailableApp } from 'app/interfaces/available-app.interfase';
 
 @Component({
   selector: 'ix-app-helm-chart-card',
@@ -9,4 +10,5 @@ import { Observable } from 'rxjs';
 })
 export class AppHelmChartCardComponent {
   @Input() isLoading$: Observable<boolean>;
+  @Input() app: AvailableApp;
 }

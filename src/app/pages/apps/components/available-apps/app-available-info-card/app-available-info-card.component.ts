@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges,
+} from '@angular/core';
 import { Observable } from 'rxjs';
+import { AvailableApp } from 'app/interfaces/available-app.interfase';
 
 @Component({
   selector: 'ix-app-available-info-card',
@@ -7,6 +10,13 @@ import { Observable } from 'rxjs';
   styleUrls: ['./app-available-info-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppAvailableInfoCardComponent {
+export class AppAvailableInfoCardComponent implements OnChanges {
   @Input() isLoading$: Observable<boolean>;
+  @Input() app: AvailableApp;
+
+  constructor(private cdr: ChangeDetectorRef) { }
+
+  ngOnChanges(): void {
+    this.cdr.markForCheck();
+  }
 }
