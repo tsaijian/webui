@@ -20,7 +20,12 @@
 </div>
 <div class="app-list-item">
   {{ 'Chart Version' | translate }}:
-  <ngx-skeleton-loader *ngIf="isLoading$ | async; else notAvailable"></ngx-skeleton-loader>
+  <ngx-skeleton-loader *ngIf="isLoading$ | async; else chartVersion"></ngx-skeleton-loader>
+  <ng-template #chartVersion>
+    <ng-container *ngIf="app?.last_update?.$date; else notAvailable">
+      {{ app?.latest_version }}
+    </ng-container>
+  </ng-template>
 </div>
 <div class="app-list-item">
   {{ 'Maintainer' | translate }}:
