@@ -224,6 +224,16 @@ export class AvailableAppsStore extends ComponentStore<AvailableAppsState> {
                 installedApps: state.installedApps.filter(
                   (chartRelease) => chartRelease.name !== apiEvent.id.toString(),
                 ),
+                availableApps: state.availableApps.map((app) => {
+                  if (!app.installed) {
+                    return { ...app };
+                  }
+                  if (app.name !== apiEvent.fields.id) {
+                    return { ...app };
+                  }
+
+                  return { ...app, installed: false };
+                }),
               };
             });
             break;
@@ -232,6 +242,9 @@ export class AvailableAppsStore extends ComponentStore<AvailableAppsState> {
               return {
                 ...state,
                 installedApps: [...state.installedApps, apiEvent.fields],
+                availableApps: state.availableApps.map(
+                  (app) => (app.name === apiEvent.fields.id ? { ...app, installed: true } : { ...app }),
+                ),
               };
             });
             break;
