@@ -30,6 +30,7 @@ import {
 import {
   PermissionsItemComponent,
 } from 'app/pages/datasets/modules/permissions/components/permissions-item/permissions-item.component';
+import { SaveAsPresetModalComponent } from 'app/pages/datasets/modules/permissions/components/save-as-preset-modal/save-as-preset-modal.component';
 import {
   SelectPresetModalComponent,
 } from 'app/pages/datasets/modules/permissions/components/select-preset-modal/select-preset-modal.component';
@@ -93,7 +94,7 @@ describe('DatasetAclEditorComponent', () => {
     providers: [
       StorageService,
       DatasetAclEditorStore,
-      DialogService,
+      mockProvider(DialogService),
       mockWebsocket([
         mockCall('filesystem.getacl', acl),
         mockCall('filesystem.stat', {
@@ -106,9 +107,14 @@ describe('DatasetAclEditorComponent', () => {
         userQueryDsCache: () => of(),
         groupQueryDsCache: () => of(),
       }),
+      mockProvider(MatDialog, {
+        open: jest.fn(() => ({
+          afterClosed: () => of(),
+        })),
+      }),
     ],
-    params: {
-      datasetId: 'pool/dataset',
+    queryParams: {
+      path: '/mnt/pool/dataset',
     },
   });
 
@@ -128,13 +134,23 @@ describe('DatasetAclEditorComponent', () => {
       jest.restoreAllMocks();
     });
 
-    it('shows preset modal if user presses "Use Preset"', async () => {
-      const usePresetButton = await loader.getHarness(MatButtonHarness.with({ text: 'Use ACL Preset' }));
+    it('shows select preset modal if user presses "Use Preset"', async () => {
+      const usePresetButton = await loader.getHarness(MatButtonHarness.with({ text: 'Use Preset' }));
       await usePresetButton.click();
 
       expect(matDialog.open).toHaveBeenCalledWith(
         SelectPresetModalComponent,
         { data: { allowCustom: false, datasetPath: '/mnt/pool/dataset' } },
+      );
+    });
+
+    it('shows save as preset modal if user presses "Save As Preset"', async () => {
+      const saveAsPresetButton = await loader.getHarness(MatButtonHarness.with({ text: 'Save As Preset' }));
+      await saveAsPresetButton.click();
+
+      expect(matDialog.open).toHaveBeenCalledWith(
+        SaveAsPresetModalComponent,
+        { data: { aclType: AclType.Nfs4, datasetPath: '/mnt/pool/dataset' } },
       );
     });
   });

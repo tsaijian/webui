@@ -10,8 +10,9 @@ import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import {
   AuthorizedAccessFormComponent,
 } from 'app/pages/sharing/iscsi/authorized-access/authorized-access-form/authorized-access-form.component';
-import { WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('AuthorizedAccessFormComponent', () => {
   let spectator: Spectator<AuthorizedAccessFormComponent>;
@@ -35,6 +36,7 @@ describe('AuthorizedAccessFormComponent', () => {
     ],
     providers: [
       mockProvider(IxSlideInService),
+      mockProvider(DialogService),
       mockWebsocket([
         mockCall('iscsi.auth.create'),
         mockCall('iscsi.auth.update'),

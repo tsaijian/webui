@@ -1,0 +1,40 @@
+@import 'mixins/cards';
+
+.app-logo {
+  height: 80px;
+  margin-bottom: auto;
+  padding: 5px;
+  position: relative;
+  width: 110px;
+
+  img {
+    width: 100%;
+  }
+}
+
+.card {
+  @include details-card();
+  margin: 0;
+
+  mat-card-header {
+    button {
+      margin-left: 8px;
+    }
+  }
+
+  .details-list {
+    flex: 1;
+    width: 100%;
+  }
+
+  .details-item .value a {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .portals {
+    margin-top: 7px;
+  }
+}

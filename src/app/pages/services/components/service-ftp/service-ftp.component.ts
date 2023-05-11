@@ -11,12 +11,15 @@ import { filter, switchMap } from 'rxjs/operators';
 import { invertUmask } from 'app/helpers/mode.helper';
 import { idNameArrayToOptions } from 'app/helpers/options.helper';
 import helptext from 'app/helptext/services/components/service-ftp';
-import { portRangeValidator, rangeValidator } from 'app/modules/entity/entity-form/validators/range-validation';
-import { EntityUtils } from 'app/modules/entity/utils';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormatterService } from 'app/modules/ix-forms/services/ix-formatter.service';
-import { DialogService, SystemGeneralService, WebSocketService } from 'app/services';
+import { portRangeValidator, rangeValidator } from 'app/modules/ix-forms/validators/range-validation/range-validation';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
+import { DialogService, SystemGeneralService } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { FilesystemService } from 'app/services/filesystem.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -84,18 +87,25 @@ export class ServiceFtpComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private ws: WebSocketService,
-    private errorHandler: FormErrorHandlerService,
+    private formErrorHandler: FormErrorHandlerService,
     private cdr: ChangeDetectorRef,
+    private errorHandler: ErrorHandlerService,
     private router: Router,
     private dialogService: DialogService,
     private systemGeneralService: SystemGeneralService,
     private filesystemService: FilesystemService,
     private translate: TranslateService,
+    private snackbar: SnackbarService,
     public iecFormatter: IxFormatterService,
   ) {}
 
   ngOnInit(): void {
     this.loadConfig();
+    this.form.controls.tls.valueChanges.pipe(untilDestroyed(this)).subscribe((tlsEnabled) => {
+      if (!tlsEnabled) {
+        this.form.controls.ssltls_certificate.patchValue(null);
+      }
+    });
   }
 
   onSubmit(): void {
@@ -111,12 +121,13 @@ export class ServiceFtpComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isFormLoading = false;
+          this.snackbar.success(this.translate.instant('Service configuration saved'));
           this.cdr.markForCheck();
           this.router.navigate(['/services']);
         },
         error: (error) => {
           this.isFormLoading = false;
-          this.errorHandler.handleWsFormError(error, this.form);
+          this.formErrorHandler.handleWsFormError(error, this.form);
           this.cdr.markForCheck();
         },
       });
@@ -124,10 +135,6 @@ export class ServiceFtpComponent implements OnInit {
 
   onToggleAdvancedOptions(): void {
     this.isAdvancedMode = !this.isAdvancedMode;
-  }
-
-  onLinkClicked(): void {
-    this.router.navigate(['/', 'credentials', 'certificates']);
   }
 
   private loadConfig(): void {
@@ -145,8 +152,8 @@ export class ServiceFtpComponent implements OnInit {
           this.setRootLoginWarning();
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          new EntityUtils().handleWsError(this, error, this.dialogService);
+        error: (error: WebsocketError) => {
+          this.dialogService.error(this.errorHandler.parseWsError(error));
           this.isFormLoading = false;
           this.cdr.markForCheck();
         },
@@ -154,14 +161,14 @@ export class ServiceFtpComponent implements OnInit {
   }
 
   private setRootLoginWarning(): void {
-    this.form.controls['rootlogin'].valueChanges.pipe(
+    this.form.controls.rootlogin.valueChanges.pipe(
       filter(Boolean),
       switchMap(() => {
         return this.dialogService.confirm({
           title: helptext.rootlogin_dialog_title,
           message: helptext.rootlogin_dialog_message,
-          buttonMsg: this.translate.instant('Continue'),
-          cancelMsg: this.translate.instant('Cancel'),
+          buttonText: this.translate.instant('Continue'),
+          cancelText: this.translate.instant('Cancel'),
         });
       }),
       untilDestroyed(this),

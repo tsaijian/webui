@@ -11,13 +11,13 @@ import { SetDatasetQuota } from 'app/interfaces/dataset-quota.interface';
 import { ChipsProvider } from 'app/modules/ix-forms/components/ix-chips/chips-provider';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormatterService } from 'app/modules/ix-forms/services/ix-formatter.service';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { UserService, WebSocketService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 
 @UntilDestroy()
 @Component({
   templateUrl: './dataset-quota-add-form.component.html',
-  styleUrls: ['./dataset-quota-add-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DatasetQuotaAddFormComponent {
@@ -84,6 +84,7 @@ export class DatasetQuotaAddFormComponent {
   constructor(
     private formBuilder: FormBuilder,
     private ws: WebSocketService,
+    private snackbar: SnackbarService,
     private translate: TranslateService,
     public formatter: IxFormatterService,
     private cdr: ChangeDetectorRef,
@@ -106,6 +107,7 @@ export class DatasetQuotaAddFormComponent {
       .pipe(untilDestroyed(this))
       .subscribe({
         next: () => {
+          this.snackbar.success(this.translate.instant('Quotas added'));
           this.isLoading = false;
           this.slideIn.close();
           this.cdr.markForCheck();

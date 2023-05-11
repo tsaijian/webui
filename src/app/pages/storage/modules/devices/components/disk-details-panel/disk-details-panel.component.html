@@ -1,11 +1,14 @@
 <div class="header">
   <h3 class="title">
     <div class="mobile-prefix">
-      <a class="mobile-back-button">
-        <ix-icon
-          name="mdi-chevron-left"
-          (click)="onCloseMobileDetails()"
-        ></ix-icon>
+      <a
+        tabindex="0"
+        class="mobile-back-button"
+        ixTest="disk-details-back"
+        (click)="onCloseMobileDetails()"
+        (keydown.enter)="onCloseMobileDetails()"
+      >
+        <ix-icon name="mdi-chevron-left"></ix-icon>
       </a>
       {{ 'Details for' | translate }}
     </div>
@@ -31,6 +34,7 @@
       [topologyParentItem]="topologyParentItem"
       [poolId]="poolId"
       [topologyCategory]="topologyCategory"
+      [hasTopLevelRaidz]="hasTopLevelRaidz"
     ></ix-zfs-info-card>
 
     <ng-container *ngIf="isTopologyDisk && hasTopologyItemDisk">

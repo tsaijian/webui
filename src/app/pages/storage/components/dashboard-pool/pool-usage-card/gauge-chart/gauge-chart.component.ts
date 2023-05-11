@@ -18,15 +18,26 @@ interface ChartElement {
     draw: () => void;
   };
   _view: Chart.DoughnutModel;
+  getMeta: () => ({
+    data: ChartElement[];
+  });
+  chart: {
+    chart: {
+      ctx: CanvasRenderingContext2D;
+    };
+  };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 Chart.defaults.roundedDoughnut = Chart.helpers.clone(Chart.defaults.doughnut);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
 Chart.controllers.roundedDoughnut = Chart.controllers.doughnut.extend({
-  draw(ease: number) {
+  draw(this: ChartElement, ease: number) {
     const ctx = this.chart.chart.ctx;
 
     const easingDecimal = ease || 1;
     let tmpView: Chart.DoughnutModel;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     Chart.helpers.each(this.getMeta().data, (chartElem: ChartElement, index: number) => {
       if (index === 2) {
         return;
@@ -48,7 +59,7 @@ Chart.controllers.roundedDoughnut = Chart.controllers.doughnut.extend({
 
       if (index === 0) {
         // Draw rounded beginning for 1st item
-        ctx.fillStyle = view.backgroundColor;
+        ctx.fillStyle = view.backgroundColor as string;
 
         ctx.translate(view.x, view.y);
         ctx.beginPath();
@@ -66,7 +77,7 @@ Chart.controllers.roundedDoughnut = Chart.controllers.doughnut.extend({
       }
       if (index === 1) {
         // Draw rounded ending for 2nd item
-        ctx.fillStyle = view.backgroundColor;
+        ctx.fillStyle = view.backgroundColor as string;
 
         ctx.translate(view.x, view.y);
         ctx.beginPath();
@@ -85,7 +96,7 @@ Chart.controllers.roundedDoughnut = Chart.controllers.doughnut.extend({
 
       if (index === 1) {
         // Draw handle circle (1st item color)
-        ctx.fillStyle = tmpView.backgroundColor;
+        ctx.fillStyle = tmpView.backgroundColor as string;
 
         ctx.translate(view.x, view.y);
         ctx.beginPath();

@@ -54,9 +54,9 @@
 
             <ix-input
               formControlName="maxconn"
+              type="number"
               [label]="'Max Connections' | translate"
               [tooltip]="tooltips.maxconn | translate"
-              type="number"
             ></ix-input>
 
             <ix-combobox
@@ -93,6 +93,7 @@
           mat-button
           type="submit"
           color="primary"
+          ixTest="save"
           [disabled]="form.invalid || isLoading"
         >
           {{ 'Save' | translate }}

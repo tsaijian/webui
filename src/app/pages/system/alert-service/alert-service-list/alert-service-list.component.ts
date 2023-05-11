@@ -4,11 +4,12 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertServiceType } from 'app/enums/alert-service-type.enum';
 import { AlertService } from 'app/interfaces/alert-service.interface';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { EntityTableComponent } from 'app/modules/entity/entity-table/entity-table.component';
 import { EntityTableConfig } from 'app/modules/entity/entity-table/entity-table.interface';
-import { EntityUtils } from 'app/modules/entity/utils';
 import { AlertServiceComponent } from 'app/pages/system/alert-service/alert-service/alert-service.component';
 import { WebSocketService, DialogService } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 
 @UntilDestroy()
@@ -57,6 +58,7 @@ export class AlertServiceListComponent implements EntityTableConfig<AlertService
     protected aroute: ActivatedRoute,
     protected ws: WebSocketService,
     protected dialogService: DialogService,
+    private errorHandler: ErrorHandlerService,
     private translate: TranslateService,
     private slideInService: IxSlideInService,
   ) { }
@@ -68,7 +70,7 @@ export class AlertServiceListComponent implements EntityTableConfig<AlertService
     return true;
   }
 
-  afterInit(entityTable: EntityTableComponent): void {
+  afterInit(entityTable: EntityTableComponent<AlertService>): void {
     this.slideInService.onClose$.pipe(untilDestroyed(this)).subscribe(() => {
       entityTable.getData();
     });
@@ -78,11 +80,11 @@ export class AlertServiceListComponent implements EntityTableConfig<AlertService
     this.slideInService.open(AlertServiceComponent);
   }
 
-  doEdit(id: number, entityTable: EntityTableComponent): void {
-    const row = entityTable.rows.find((row) => row.id === id);
+  doEdit(id: number, entityTable: EntityTableComponent<AlertService>): void {
+    const alertService = entityTable.rows.find((row) => row.id === id);
 
     const form = this.slideInService.open(AlertServiceComponent);
-    form.setAlertServiceForEdit(row);
+    form.setAlertServiceForEdit(alertService);
   }
 
   onCheckboxChange(row: AlertService): void {
@@ -94,9 +96,9 @@ export class AlertServiceListComponent implements EntityTableConfig<AlertService
             row.enabled = !row.enabled;
           }
         },
-        error: (err) => {
+        error: (error: WebsocketError) => {
           row.enabled = !row.enabled;
-          new EntityUtils().handleWsError(this, err, this.dialogService);
+          this.dialogService.error(this.errorHandler.parseWsError(error));
         },
       });
   }

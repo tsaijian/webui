@@ -3,18 +3,18 @@ import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  forkJoin, of, merge, Observable,
+  forkJoin, of, Observable,
 } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { DirectoryServiceState } from 'app/enums/directory-service-state.enum';
 import { IdmapName } from 'app/enums/idmap.enum';
 import helptext from 'app/helptext/directory-service/dashboard';
 import idmapHelptext from 'app/helptext/directory-service/idmap';
+import { EmptyConfig } from 'app/interfaces/empty-config.interface';
 import { Idmap } from 'app/interfaces/idmap.interface';
 import { KerberosKeytab } from 'app/interfaces/kerberos-config.interface';
 import { KerberosRealm } from 'app/interfaces/kerberos-realm.interface';
 import { Option } from 'app/interfaces/option.interface';
-import { EmptyConfig } from 'app/modules/entity/entity-empty/entity-empty.component';
 import { AppTableConfig } from 'app/modules/entity/table/table.component';
 import { AppLoaderService } from 'app/modules/loader/app-loader.service';
 import { ActiveDirectoryComponent } from 'app/pages/directory-service/components/active-directory/active-directory.component';
@@ -26,7 +26,6 @@ import {
   DialogService, IdmapService, WebSocketService,
 } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
-import { ModalService } from 'app/services/modal.service';
 import { KerberosRealmsFormComponent } from './components/kerberos-realms-form/kerberos-realms-form.component';
 import { LdapComponent } from './components/ldap/ldap.component';
 
@@ -170,7 +169,6 @@ export class DirectoryServicesComponent implements OnInit {
   constructor(
     private ws: WebSocketService,
     private idmapService: IdmapService,
-    private modalService: ModalService,
     private slideInService: IxSlideInService,
     private dialog: DialogService,
     private loader: AppLoaderService,
@@ -180,11 +178,11 @@ export class DirectoryServicesComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshCards();
-    merge(
-      this.slideInService.onClose$.pipe(filter((res) => !!res)),
-      this.modalService.refreshTable$,
-    )
-      .pipe(untilDestroyed(this))
+    this.slideInService.onClose$
+      .pipe(
+        filter((slideInResult) => !!slideInResult),
+        untilDestroyed(this),
+      )
       .subscribe(() => {
         this.refreshCards();
       });
@@ -277,7 +275,7 @@ export class DirectoryServicesComponent implements OnInit {
     expansionPanel.open();
     this.dialog.confirm({
       title: helptext.advancedEdit.title,
-      hideCheckBox: true,
+      hideCheckbox: true,
       message: helptext.advancedEdit.message,
     })
       .pipe(filter((confirmed) => !confirmed), untilDestroyed(this))
@@ -324,8 +322,8 @@ export class DirectoryServicesComponent implements OnInit {
         return this.dialog.confirm({
           title: idmapHelptext.idmap.enable_ad_dialog.title,
           message: idmapHelptext.idmap.enable_ad_dialog.message,
-          hideCheckBox: true,
-          buttonMsg: idmapHelptext.idmap.enable_ad_dialog.button,
+          hideCheckbox: true,
+          buttonText: idmapHelptext.idmap.enable_ad_dialog.button,
         })
           .pipe(
             filter((confirmed) => confirmed),

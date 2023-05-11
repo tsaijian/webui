@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { createComponentFactory, Spectator, mockProvider } from '@ngneat/spectator/jest';
+import { StoreModule } from '@ngrx/store';
 import { of } from 'rxjs';
 import { MockWebsocketService } from 'app/core/testing/classes/mock-websocket.service';
 import { mockCall, mockWebsocket } from 'app/core/testing/utils/mock-websocket.utils';
@@ -23,9 +24,12 @@ import {
   DefaultGatewayDialogComponent,
 } from 'app/pages/network/components/default-gateway-dialog/default-gateway-dialog.component';
 import { InterfaceFormComponent } from 'app/pages/network/components/interface-form/interface-form.component';
-import { NetworkService, SystemGeneralService, WebSocketService } from 'app/services';
+import { DialogService, NetworkService, SystemGeneralService } from 'app/services';
 import { CoreService } from 'app/services/core-service/core.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
+import { haInfoReducer } from 'app/store/ha-info/ha-info.reducer';
+import { haInfoStateKey } from 'app/store/ha-info/ha-info.selectors';
 
 describe('InterfaceFormComponent', () => {
   let spectator: Spectator<InterfaceFormComponent>;
@@ -53,6 +57,19 @@ describe('InterfaceFormComponent', () => {
     imports: [
       ReactiveFormsModule,
       IxFormsModule,
+      StoreModule.forRoot({ [haInfoStateKey]: haInfoReducer }, {
+        initialState: {
+          [haInfoStateKey]: {
+            haStatus: {
+              hasHa: true,
+              reasons: [],
+            },
+            isHaLicensed: true,
+            isUpgradePending: false,
+            hasOnlyMissmatchVersionsReason: false,
+          },
+        },
+      }),
     ],
     declarations: [
       DefaultGatewayDialogComponent,
@@ -96,6 +113,7 @@ describe('InterfaceFormComponent', () => {
         ],
       }),
       mockProvider(CoreService),
+      mockProvider(DialogService),
       mockProvider(IxSlideInService),
       mockProvider(SystemGeneralService, {
         getProductType: () => ProductType.ScaleEnterprise,
@@ -247,7 +265,7 @@ describe('InterfaceFormComponent', () => {
     });
 
     it('hides Aliases when either DHCP or Autoconfigure IPv6 is enabled', async () => {
-      let aliasesList = await loader.getHarnessOrNull(IxListHarness.with({ label: 'Aliases' }));
+      aliasesList = await loader.getHarnessOrNull(IxListHarness.with({ label: 'Aliases' }));
       expect(aliasesList).toBeTruthy();
 
       await form.fillForm({
@@ -316,13 +334,12 @@ describe('InterfaceFormComponent', () => {
 
   describe('failover fields', () => {
     beforeEach(() => {
-      const mockWebsocket = spectator.inject(MockWebsocketService);
-      mockWebsocket.mockCall('failover.licensed', true);
+      const websocketMock = spectator.inject(MockWebsocketService);
+      websocketMock.mockCall('failover.licensed', true);
       spectator.component.ngOnInit();
     });
 
     it('checks whether failover is licensed for', () => {
-      expect(ws.call).toHaveBeenCalledWith('failover.licensed');
       expect(ws.call).toHaveBeenCalledWith('failover.node');
     });
 

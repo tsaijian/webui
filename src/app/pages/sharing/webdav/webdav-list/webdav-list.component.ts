@@ -3,11 +3,12 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { helptextSharingWebdav } from 'app/helptext/sharing';
 import { WebDavShare, WebDavShareUpdate } from 'app/interfaces/web-dav-share.interface';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { EntityTableComponent } from 'app/modules/entity/entity-table/entity-table.component';
 import { EntityTableConfig } from 'app/modules/entity/entity-table/entity-table.interface';
-import { EntityUtils } from 'app/modules/entity/utils';
 import { WebdavFormComponent } from 'app/pages/sharing/webdav/webdav-form/webdav-form.component';
 import { DialogService } from 'app/services/dialog.service';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 import { WebSocketService } from 'app/services/ws.service';
 
@@ -15,7 +16,7 @@ import { WebSocketService } from 'app/services/ws.service';
 @Component({
   template: '<ix-entity-table [title]="title" [conf]="this"></ix-entity-table>',
 })
-export class WebdavListComponent implements EntityTableConfig, OnInit {
+export class WebdavListComponent implements EntityTableConfig<WebDavShare>, OnInit {
   title = this.translate.instant('WebDAV');
   queryCall = 'sharing.webdav.query' as const;
   updateCall = 'sharing.webdav.update' as const;
@@ -51,12 +52,13 @@ export class WebdavListComponent implements EntityTableConfig, OnInit {
     },
   };
 
-  private tableComponent: EntityTableComponent;
+  private tableComponent: EntityTableComponent<WebDavShare>;
 
   constructor(
     private ws: WebSocketService,
     private dialog: DialogService,
     private translate: TranslateService,
+    private errorHandler: ErrorHandlerService,
     private slideInService: IxSlideInService,
   ) {}
 
@@ -66,12 +68,12 @@ export class WebdavListComponent implements EntityTableConfig, OnInit {
     });
   }
 
-  doAdd(id: string, tableComponent: EntityTableComponent): void {
+  doAdd(id: string, tableComponent: EntityTableComponent<WebDavShare>): void {
     this.tableComponent = tableComponent;
     this.slideInService.open(WebdavFormComponent);
   }
 
-  doEdit(rowId: string, tableComponent: EntityTableComponent): void {
+  doEdit(rowId: number, tableComponent: EntityTableComponent<WebDavShare>): void {
     this.tableComponent = tableComponent;
     const webdavForm = this.slideInService.open(WebdavFormComponent);
     webdavForm.setWebdavForEdit(tableComponent.rows.find((row) => row.id === rowId));
@@ -84,9 +86,9 @@ export class WebdavListComponent implements EntityTableConfig, OnInit {
         next: (share) => {
           row.enabled = share.enabled;
         },
-        error: (err) => {
+        error: (error: WebsocketError) => {
           row.enabled = !row.enabled;
-          new EntityUtils().handleWsError(this, err, this.dialog);
+          this.dialog.error(this.errorHandler.parseWsError(error));
         },
       });
   }

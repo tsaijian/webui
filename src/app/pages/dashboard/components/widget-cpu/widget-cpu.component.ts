@@ -69,21 +69,13 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
 
   labels: string[] = [];
   isCpuAvgReady = false;
+  cpuData: WidgetCpuData;
 
   readonly ScreenType = ScreenType;
 
-  private _cpuData: WidgetCpuData;
   protected currentTheme: Theme;
   private utils: ThemeUtils;
   private dataSubscription: Subscription;
-
-  get cpuData(): WidgetCpuData {
-    return this._cpuData;
-  }
-
-  set cpuData(value) {
-    this._cpuData = value;
-  }
 
   constructor(
     public translate: TranslateService,
@@ -96,13 +88,13 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
 
     this.utils = new ThemeUtils();
 
-    mediaObserver.media$.pipe(untilDestroyed(this)).subscribe((evt) => {
+    mediaObserver.asObservable().pipe(untilDestroyed(this)).subscribe((changes) => {
       const size = {
-        width: evt.mqAlias === 'xs' ? 320 : 536,
+        width: changes[0].mqAlias === 'xs' ? 320 : 536,
         height: 140,
       };
 
-      const currentScreenType = evt.mqAlias === 'xs' ? ScreenType.Mobile : ScreenType.Desktop;
+      const currentScreenType = changes[0].mqAlias === 'xs' ? ScreenType.Mobile : ScreenType.Desktop;
 
       if (this.chart && this.screenType !== currentScreenType) {
         (this.chart.resize as (size: { width: number; height: number }) => void)(size);
@@ -249,7 +241,7 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
       const ds = this.makeDatasets(this.cpuData.data);
       this.ctx = el.getContext('2d');
 
-      const data = {
+      const chartData = {
         labels: this.labels,
         datasets: ds,
       };
@@ -271,7 +263,7 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
               if (this.screenType === ScreenType.Mobile) {
                 this.legendData = null;
                 this.legendIndex = null;
-                return;
+                return '';
               }
 
               this.legendData = data.datasets;
@@ -312,7 +304,7 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
 
       this.chart = new Chart(this.ctx, {
         type: 'bar',
-        data,
+        data: chartData,
         options,
       });
     } else {
@@ -381,8 +373,6 @@ export class WidgetCpuComponent extends WidgetComponent implements AfterViewInit
     const rgb = valueType === 'hex' ? this.utils.hexToRgb(txtColor).rgb : this.utils.rgbToArray(txtColor);
 
     // return rgba
-    const rgba = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`;
-
-    return rgba;
+    return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity})`;
   }
 }

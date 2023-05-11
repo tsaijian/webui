@@ -11,8 +11,9 @@ import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { SchedulerModule } from 'app/modules/scheduler/scheduler.module';
 import { ScrubTaskFormComponent } from 'app/pages/data-protection/scrub-task/scrub-task-form/scrub-task-form.component';
-import { DialogService, WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { selectTimezone } from 'app/store/system-config/system-config.selectors';
 
 describe('ScrubTaskFormComponent', () => {
@@ -42,7 +43,7 @@ describe('ScrubTaskFormComponent', () => {
       ReactiveFormsModule,
     ],
     providers: [
-      DialogService,
+      mockProvider(DialogService),
       mockWebsocket([
         mockCall('pool.scrub.create'),
         mockCall('pool.scrub.update'),

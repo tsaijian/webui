@@ -5,19 +5,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { helptextSharingIscsi } from 'app/helptext/sharing';
 import { IscsiAuthAccess, IscsiAuthAccessUpdate } from 'app/interfaces/iscsi.interface';
+import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
+import { IxValidatorsService } from 'app/modules/ix-forms/services/ix-validators.service';
 import {
   doesNotEqualValidator,
   matchOtherValidator,
-} from 'app/modules/entity/entity-form/validators/password-validation/password-validation';
-import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
-import { IxValidatorsService } from 'app/modules/ix-forms/services/ix-validators.service';
-import { WebSocketService } from 'app/services';
+} from 'app/modules/ix-forms/validators/password-validation/password-validation';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
   templateUrl: './authorized-access-form.component.html',
-  styleUrls: ['./authorized-access-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthorizedAccessFormComponent {
@@ -97,8 +96,8 @@ export class AuthorizedAccessFormComponent {
 
   onSubmit(): void {
     const values = this.form.value;
-    delete values['secret_confirm'];
-    delete values['peersecret_confirm'];
+    delete values.secret_confirm;
+    delete values.peersecret_confirm;
 
     this.isLoading = true;
     let request$: Observable<unknown>;

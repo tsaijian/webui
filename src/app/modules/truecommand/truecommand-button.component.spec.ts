@@ -10,6 +10,9 @@ import { mockWebsocket, mockCall } from 'app/core/testing/utils/mock-websocket.u
 import { TrueCommandStatus } from 'app/enums/true-command-status.enum';
 import { TrueCommandConfig } from 'app/interfaces/true-command-config.interface';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
+import {
+  TruecommandSignupModalComponent,
+} from 'app/modules/truecommand/components/truecommand-signup-modal/truecommand-signup-modal.component';
 import { TruecommandStatusModalComponent } from 'app/modules/truecommand/components/truecommand-status-modal/truecommand-status-modal.component';
 import { TruecommandButtonComponent } from 'app/modules/truecommand/truecommand-button.component';
 import { DialogService } from 'app/services';
@@ -49,7 +52,11 @@ describe('TruecommandButtonComponent', () => {
         ]),
         mockProvider(DialogService, {
           generalDialog: jest.fn(() => of()),
-          dialogForm: jest.fn(() => of()),
+        }),
+        mockProvider(MatDialog, {
+          open: jest.fn(() => ({
+            afterClosed: jest.fn(() => of()),
+          })),
         }),
         mockProvider(MatDialogRef),
       ],
@@ -71,18 +78,14 @@ describe('TruecommandButtonComponent', () => {
 
       it(`shows ${expectedButtonId} button with trueconnect icon`, () => {
         expect(spectator.query(expectedButtonId)).toBeVisible();
-        expect(spectator.query(`${expectedButtonId} [svgIcon="ix:truecommand_logo_white"]`)).toBeVisible();
+        expect(spectator.query(`${expectedButtonId} [name="ix:logo_truecommand_white"]`)).toBeVisible();
       });
 
       it(`shows correct message when user clicks on the ${expectedButtonId} button`, () => {
         spectator.click(spectator.query(expectedButtonId));
 
         if (expectedDialogType === 'form') {
-          expect(dialogServiceMock.dialogForm).toHaveBeenCalledWith(
-            expect.objectContaining({
-              title: 'Connect to TrueCommand Cloud',
-            }),
-          );
+          expect(spectator.inject(MatDialog).open).toHaveBeenCalledWith(TruecommandSignupModalComponent);
         }
 
         if (expectedDialogType === 'general') {
@@ -123,7 +126,7 @@ describe('TruecommandButtonComponent', () => {
 
       it(`shows ${expectedButtonId} button with trueconnect icon`, () => {
         expect(spectator.query(expectedButtonId)).toBeVisible();
-        expect(spectator.query(`${expectedButtonId} [svgIcon="ix:truecommand_logo_white"]`)).toBeVisible();
+        expect(spectator.query(`${expectedButtonId} [name="ix:logo_truecommand_white"]`)).toBeVisible();
       });
 
       it(`shows status modal when user clicks on the ${expectedButtonId} button`, () => {
@@ -145,11 +148,7 @@ describe('TruecommandButtonComponent', () => {
         }
 
         if (expectedDialogType === 'form') {
-          expect(dialogServiceMock.dialogForm).toHaveBeenCalledWith(
-            expect.objectContaining({
-              title: 'Connect to TrueCommand Cloud',
-            }),
-          );
+          expect(matDialogMock.open).toHaveBeenCalledWith(TruecommandSignupModalComponent);
         }
       });
     });

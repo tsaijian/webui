@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { RsyncModule } from 'app/interfaces/rsync-module.interface';
 import { EntityTableComponent } from 'app/modules/entity/entity-table/entity-table.component';
 import { EntityTableConfig } from 'app/modules/entity/entity-table/entity-table.interface';
 import {
@@ -8,17 +10,21 @@ import {
 } from 'app/pages/services/components/service-rsync/rsync-module-form/rsync-module-form.component';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 
+interface RsyncModuleRow extends RsyncModule {
+  details?: { label: string; value: unknown }[];
+}
+
 @UntilDestroy()
 @Component({
   selector: 'ix-rsync-module-list',
   template: '<ix-entity-table [title]="title" [conf]="this"></ix-entity-table>',
 })
-export class RsyncModuleListComponent implements EntityTableConfig, OnInit {
+export class RsyncModuleListComponent implements EntityTableConfig<RsyncModuleRow>, OnInit {
   title = this.translate.instant('RSYNC Modules');
   queryCall = 'rsyncmod.query' as const;
   hasDetails = true;
   wsDelete = 'rsyncmod.delete' as const;
-  entityList: EntityTableComponent;
+  entityList: EntityTableComponent<RsyncModuleRow>;
   protected routeDelete: string[] = ['services', 'rsync', 'rsync-module', 'delete'];
 
   columns = [
@@ -50,19 +56,20 @@ export class RsyncModuleListComponent implements EntityTableConfig, OnInit {
       .subscribe(() => this.entityList.getData());
   }
 
-  afterInit(entityList: EntityTableComponent): void {
+  afterInit(entityList: EntityTableComponent<RsyncModuleRow>): void {
     this.entityList = entityList;
   }
 
-  dataHandler(entityTable: EntityTableComponent): void {
-    const rows = entityTable.rows;
-    rows.forEach((row) => {
-      row.details = [];
-      row.details.push({ label: this.translate.instant('Maximum connections'), value: row['maxconn'] },
-        { label: this.translate.instant('Host Allow'), value: row['hostsallow'] },
-        { label: this.translate.instant('Host Deny'), value: row['hostsdeny'] },
-        { label: this.translate.instant('Auxiliary parameters'), value: row['auxiliary'] });
-    });
+  dataHandler(entityTable: EntityTableComponent<RsyncModuleRow>): Observable<unknown> {
+    return of(
+      entityTable.rows.forEach((row) => {
+        row.details = [];
+        row.details.push({ label: this.translate.instant('Maximum connections'), value: row.maxconn },
+          { label: this.translate.instant('Host Allow'), value: row.hostsallow },
+          { label: this.translate.instant('Host Deny'), value: row.hostsdeny },
+          { label: this.translate.instant('Auxiliary parameters'), value: row.auxiliary });
+      }),
+    );
   }
 
   doAdd(): void {
@@ -70,8 +77,8 @@ export class RsyncModuleListComponent implements EntityTableConfig, OnInit {
   }
 
   doEdit(id: number): void {
-    const row = this.entityList.rows.find((row) => row.id === id);
+    const rsyncModule = this.entityList.rows.find((row) => row.id === id);
     const form = this.slideInService.open(RsyncModuleFormComponent, { wide: true });
-    form.setModuleForEdit(row);
+    form.setModuleForEdit(rsyncModule);
   }
 }

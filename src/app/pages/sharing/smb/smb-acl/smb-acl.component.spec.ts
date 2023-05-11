@@ -8,8 +8,9 @@ import { SmbSharesecPermission, SmbSharesecType } from 'app/enums/smb-sharesec.e
 import { SmbSharesec } from 'app/interfaces/smb-share.interface';
 import { IxListHarness } from 'app/modules/ix-forms/components/ix-list/ix-list.harness';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
-import { WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { SmbAclComponent } from './smb-acl.component';
 
 describe('SmbAclComponent', () => {
@@ -51,6 +52,7 @@ describe('SmbAclComponent', () => {
         mockCall('smb.sharesec.update'),
       ]),
       mockProvider(IxSlideInService),
+      mockProvider(DialogService),
     ],
   });
 

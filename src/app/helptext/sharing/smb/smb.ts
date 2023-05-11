@@ -1,11 +1,6 @@
-import { Validators } from '@angular/forms';
 import { marker as T } from '@biesbjerg/ngx-translate-extract-marker';
 
 export const helptextSharingSmb = {
-  fieldset_basic: T('Basic'),
-  fieldset_access: T('Access'),
-  fieldset_other: T('Other Options'),
-
   column_name: T('Name'),
   column_path: T('Path'),
   column_comment: T('Description'),
@@ -13,7 +8,6 @@ export const helptextSharingSmb = {
 
   placeholder_path: T('Path'),
   tooltip_path: T('Select pool, dataset, or directory to share.'),
-  validators_path: [Validators.required],
   errormsg_name: T(
     '<i>global</i> is a reserved name that cannot be used as a share\
  name. Please enter a different share name.',
@@ -147,13 +141,6 @@ export const helptextSharingSmb = {
     'Export ZFS snapshots as\
  <a href="https://docs.microsoft.com/en-us/windows/desktop/vss/shadow-copies-and-shadow-copy-sets"\
  target=_blank>Shadow Copies</a> for VSS clients.',
-  ),
-
-  placeholder_auxsmbconf: T('Auxiliary Parameters'),
-  tooltip_auxsmbconf: T(
-    'Additional \
- <a href="https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html" target="_blank">smb.conf</a> \
- parameters.',
   ),
 
   placeholder_aapl_name_mangling: T('Use Apple-style Character Encoding'),

@@ -8,6 +8,7 @@ const fakeJob: Job = {
   abortable: true,
   arguments: [1],
   description: null,
+  transient: false,
   error: '[EFAULT] Transferred:   \t          0 / 0 Byte, -, 0 Byte/s, ETA',
   exc_info: {
     extra: null,
@@ -44,10 +45,8 @@ describe('JobLogsRowComponent', () => {
   });
 
   it('shows arguments and logs', () => {
-    const argument = spectator.query('.list-item pre');
+    const [argument, logPath, logExcerpt, error] = spectator.queryAll('.list-item div');
     expect(argument).toHaveText('[\n  1\n]');
-
-    const [logPath, logExcerpt, error] = spectator.queryAll('.list-item div');
     expect(logPath).toHaveText('/var/log/jobs/446.log');
     expect(logExcerpt).toHaveText('<3>ERROR : webdav root \'\': error reading source root directory: couldn\'t list files: Propfind "http:192.168.3.133/"');
     expect(error).toHaveText('[EFAULT] Transferred:   \t          0 / 0 Byte, -, 0 Byte/s, ETA');

@@ -4,7 +4,6 @@ export interface SmbShare {
   aapl_name_mangling: boolean;
   abe: boolean;
   acl: boolean;
-  auxsmbconf: string;
   browsable: boolean;
   cluster_volname: string;
   comment: string;
@@ -27,6 +26,7 @@ export interface SmbShare {
   streams: boolean;
   timemachine: boolean;
   vuid: string;
+  path_local: string;
 }
 
 export enum SmbPresetType {

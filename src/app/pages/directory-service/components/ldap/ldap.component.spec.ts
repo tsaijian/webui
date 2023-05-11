@@ -17,7 +17,7 @@ import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { LdapComponent } from 'app/pages/directory-service/components/ldap/ldap.component';
 import {
-  DialogService, ModalService, SystemGeneralService, WebSocketService,
+  DialogService, SystemGeneralService, WebSocketService,
 } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 
@@ -74,7 +74,6 @@ describe('LdapComponent', () => {
       }),
       mockProvider(DialogService),
       mockProvider(SnackbarService),
-      mockProvider(ModalService),
       mockProvider(MatDialog),
     ],
     declarations: [
@@ -162,8 +161,8 @@ describe('LdapComponent', () => {
   });
 
   it('shows job dialog when form is submitted and there is a job_id in the response', async () => {
-    const mockWebsocket = spectator.inject(MockWebsocketService);
-    mockWebsocket.mockCall('ldap.update', { job_id: 2 } as LdapConfigUpdateResult);
+    const websocketMock = spectator.inject(MockWebsocketService);
+    websocketMock.mockCall('ldap.update', { job_id: 2 } as LdapConfigUpdateResult);
     const matDialog = spectator.inject(MatDialog);
     const jobComponent = {
       jobId: null,
@@ -182,6 +181,5 @@ describe('LdapComponent', () => {
     expect(jobComponent.jobId).toBe(2);
     expect(jobComponent.wsshow).toHaveBeenCalled();
     expect(spectator.inject(IxSlideInService).close).toHaveBeenCalled();
-    expect(spectator.inject(ModalService).refreshTable).toHaveBeenCalled();
   });
 });

@@ -6,11 +6,14 @@ import { ApiMethod } from 'app/interfaces/api-directory.interface';
 export interface Job<R = unknown, A = unknown[]> {
   abortable: boolean;
   arguments: A;
+  transient: boolean;
   description: string;
   error: string;
+  extra?: Record<string, unknown>;
   exc_info: {
-    type: ResponseErrorType | null;
-    extra: Record<string, unknown>;
+    type?: ResponseErrorType | null;
+    extra: string | number | boolean | unknown[] | Record<string, unknown>;
+    repr?: string;
   };
   exception: string;
   id: number;

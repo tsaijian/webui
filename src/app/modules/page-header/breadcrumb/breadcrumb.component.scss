@@ -1,0 +1,34 @@
+.breadcrumb-bar {
+  float: left;
+  height: 16px !important;
+  min-height: 16px !important;
+  width: 100%;
+
+  .breadcrumb {
+    margin: 0;
+    padding: 0;
+
+    li {
+      float: left;
+      line-height: 16px;
+      list-style: none;
+
+      &:not(:first-child)::before {
+        content: ' ';
+        padding: 0 8px;
+      }
+
+      a,
+      span {
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+
+        &.no-click {
+          color: var(--alt-fg2);
+        }
+      }
+    }
+  }
+}

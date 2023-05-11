@@ -9,8 +9,9 @@ import { IscsiAuthMethod } from 'app/enums/iscsi.enum';
 import { IscsiPortal } from 'app/interfaces/iscsi.interface';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
-import { WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { PortalFormComponent } from './portal-form.component';
 
 describe('PortalFormComponent', () => {
@@ -41,6 +42,7 @@ describe('PortalFormComponent', () => {
         mockCall('iscsi.portal.update'),
       ]),
       mockProvider(IxSlideInService),
+      mockProvider(DialogService),
       provideMockStore(),
     ],
   });

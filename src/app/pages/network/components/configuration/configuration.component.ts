@@ -3,6 +3,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '@ngrx/store';
 import { of } from 'rxjs';
 import { NetworkActivityType } from 'app/enums/network-activity-type.enum';
 import { ProductType } from 'app/enums/product-type.enum';
@@ -11,11 +12,15 @@ import helptext from 'app/helptext/network/configuration/configuration';
 import {
   NetworkConfiguration, NetworkConfigurationActivity, NetworkConfigurationConfig, NetworkConfigurationUpdate,
 } from 'app/interfaces/network-configuration.interface';
-import { ipv4Validator, ipv6Validator } from 'app/modules/entity/entity-form/validators/ip-validation';
-import { EntityUtils } from 'app/modules/entity/utils';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
-import { DialogService, SystemGeneralService, WebSocketService } from 'app/services';
+import { ipv4Validator, ipv6Validator } from 'app/modules/ix-forms/validators/ip-validation';
+import { DialogService, SystemGeneralService } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
+import { AppState } from 'app/store';
+import { selectIsHaLicensed } from 'app/store/ha-info/ha-info.selectors';
 
 @UntilDestroy()
 @Component({
@@ -198,12 +203,14 @@ export class NetworkConfigurationComponent implements OnInit {
 
   constructor(
     private ws: WebSocketService,
+    private errorHandler: ErrorHandlerService,
     private slideInService: IxSlideInService,
-    private errorHandler: FormErrorHandlerService,
+    private formErrorHandler: FormErrorHandlerService,
     private cdr: ChangeDetectorRef,
     private fb: FormBuilder,
     private dialogService: DialogService,
     private systemGeneralService: SystemGeneralService,
+    private store$: Store<AppState>,
   ) {}
 
   ngOnInit(): void {
@@ -236,9 +243,9 @@ export class NetworkConfigurationComponent implements OnInit {
     );
 
     if (this.systemGeneralService.getProductType() === ProductType.ScaleEnterprise) {
-      this.ws.call('failover.licensed').pipe(untilDestroyed(this)).subscribe((isHa) => {
-        this.hostnameB.hidden = !isHa;
-        this.hostnameVirtual.hidden = !isHa;
+      this.store$.select(selectIsHaLicensed).pipe(untilDestroyed(this)).subscribe((isHaLicensed) => {
+        this.hostnameB.hidden = !isHaLicensed;
+        this.hostnameVirtual.hidden = !isHaLicensed;
       });
     }
   }
@@ -255,11 +262,11 @@ export class NetworkConfigurationComponent implements OnInit {
             inherit_dhcp: config.domain === '',
             domain: config.domain,
             domains: config.domains,
-            nameserver1: config.nameserver1,
-            nameserver2: config.nameserver2,
-            nameserver3: config.nameserver3,
-            ipv4gateway: config.ipv4gateway,
-            ipv6gateway: config.ipv6gateway,
+            nameserver1: config.nameserver1 || config.state.nameserver1,
+            nameserver2: config.nameserver2 || config.state.nameserver2,
+            nameserver3: config.nameserver3 || config.state.nameserver3,
+            ipv4gateway: config.ipv4gateway || config.state.ipv4gateway,
+            ipv6gateway: config.ipv6gateway || config.state.ipv6gateway,
             outbound_network_activity: NetworkActivityType.Allow,
             outbound_network_value: [],
             httpproxy: config.httpproxy,
@@ -288,8 +295,8 @@ export class NetworkConfigurationComponent implements OnInit {
           this.isFormLoading = false;
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          new EntityUtils().handleWsError(this, error, this.dialogService);
+        error: (error: WebsocketError) => {
+          this.dialogService.error(this.errorHandler.parseWsError(error));
           this.isFormLoading = false;
           this.cdr.markForCheck();
         },
@@ -341,7 +348,7 @@ export class NetworkConfigurationComponent implements OnInit {
         },
         error: (error) => {
           this.isFormLoading = false;
-          this.errorHandler.handleWsFormError(error, this.form);
+          this.formErrorHandler.handleWsFormError(error, this.form);
           this.cdr.markForCheck();
         },
       });

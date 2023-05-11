@@ -14,9 +14,10 @@ import { choicesToOptions } from 'app/helpers/options.helper';
 import { helptextSharingIscsi } from 'app/helptext/sharing';
 import { IscsiExtent } from 'app/interfaces/iscsi.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
-import { IscsiService, WebSocketService } from 'app/services';
+import { IscsiService } from 'app/services';
 import { FilesystemService } from 'app/services/filesystem.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -125,10 +126,8 @@ export class ExtentFormComponent implements OnInit {
       values.path = values.disk;
     }
 
-    if (values.type === IscsiExtentType.File) {
-      if (+values.filesize !== 0) {
-        values.filesize = +values.filesize + (values.blocksize - +values.filesize % values.blocksize);
-      }
+    if (values.type === IscsiExtentType.File && +values.filesize !== 0) {
+      values.filesize = +values.filesize + (values.blocksize - +values.filesize % values.blocksize);
     }
 
     this.isLoading = true;

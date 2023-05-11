@@ -6,11 +6,15 @@ import { select, Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { tween, styler } from 'popmotion';
 import { Subject } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { filter, map, take } from 'rxjs/operators';
+import { Styler } from 'stylefire';
+import { IncomingApiMessageType } from 'app/enums/api-message-type.enum';
+import { EmptyType } from 'app/enums/empty-type.enum';
 import { NetworkInterfaceAliasType, NetworkInterfaceType } from 'app/enums/network-interface.enum';
 import { ScreenType } from 'app/enums/screen-type.enum';
 import { WINDOW } from 'app/helpers/window.helper';
 import { Dataset } from 'app/interfaces/dataset.interface';
+import { EmptyConfig } from 'app/interfaces/empty-config.interface';
 import { CoreEvent } from 'app/interfaces/events';
 import { MemoryStatsEventData } from 'app/interfaces/events/memory-stats-event.interface';
 import { SystemFeatures, SystemInfoWithFeatures } from 'app/interfaces/events/sys-info-event.interface';
@@ -19,16 +23,15 @@ import {
   NetworkInterfaceState,
 } from 'app/interfaces/network-interface.interface';
 import { Pool } from 'app/interfaces/pool.interface';
-import { ReportingRealtimeUpdate } from 'app/interfaces/reporting.interface';
 import { Interval } from 'app/interfaces/timeout.interface';
 import { VolumesData, VolumeData } from 'app/interfaces/volume-data.interface';
-import { EmptyConfig, EmptyType } from 'app/modules/entity/entity-empty/entity-empty.component';
 import { DashboardFormComponent } from 'app/pages/dashboard/components/dashboard-form/dashboard-form.component';
 import { DashConfigItem } from 'app/pages/dashboard/components/widget-controller/widget-controller.component';
-import { WebSocketService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 import { LayoutService } from 'app/services/layout.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { AppState } from 'app/store';
+import { selectIsHaLicensed } from 'app/store/ha-info/ha-info.selectors';
 import { dashboardStateLoaded } from 'app/store/preferences/preferences.actions';
 import { PreferencesState } from 'app/store/preferences/preferences.reducer';
 import { selectPreferencesState } from 'app/store/preferences/preferences.selectors';
@@ -108,7 +111,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   // For widgetsysinfo
-  isHa: boolean;
+  isHaLicensed: boolean;
   sysinfoReady = false;
 
   // For CPU widget
@@ -124,7 +127,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     protected ws: WebSocketService,
-    private el: ElementRef,
+    private el: ElementRef<HTMLElement>,
     private translate: TranslateService,
     private slideInService: IxSlideInService,
     private layoutService: LayoutService,
@@ -141,10 +144,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkScreenSize();
-    this.ws.call('failover.licensed').pipe(untilDestroyed(this)).subscribe((hasFailover) => {
-      if (hasFailover) {
-        this.isHa = true;
-      }
+    this.store$.select(selectIsHaLicensed).pipe(untilDestroyed(this)).subscribe((isHaLicensed) => {
+      this.isHaLicensed = isHaLicensed;
     });
     this.sysinfoReady = true;
   }
@@ -191,12 +192,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.screenType = currentScreenType;
 
     const wrapper = document.querySelector<HTMLElement>('.fn-maincontent');
-    wrapper.style.overflow = this.screenType === ScreenType.Mobile ? 'hidden' : 'auto';
-    this.optimizeWidgetContainer();
+    if (wrapper) {
+      wrapper.style.overflow = this.screenType === ScreenType.Mobile ? 'hidden' : 'auto';
+      this.optimizeWidgetContainer();
+    }
   }
 
   optimizeWidgetContainer(): void {
-    const wrapper = document.querySelector<HTMLElement>('.rightside-content-hold');
+    const wrapper = this.layoutService.getContentContainer();
 
     const withMargin = this.widgetWidth + 8;
     const max = Math.floor(wrapper.offsetWidth / withMargin);
@@ -207,12 +210,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   onMobileLaunch(evt: DashConfigItem): void {
     this.activeMobileWidget = [evt];
 
-    // Transition
-    const viewportElement = this.el.nativeElement.querySelector('.mobile-viewport');
-    const viewport = styler(viewportElement);
-    const carouselElement = this.el.nativeElement.querySelector('.mobile-viewport .carousel');
-    const carousel = styler(carouselElement);
-    const vpw = viewport.get('width'); // 600;
+    const { carousel, vpw } = this.getCarouselHtmlData();
 
     const startX = 0;
     const endX = vpw * -1;
@@ -225,12 +223,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onMobileBack(): void {
-    // Transition
-    const viewportElement = this.el.nativeElement.querySelector('.mobile-viewport');
-    const viewport = styler(viewportElement);
-    const carouselElement = this.el.nativeElement.querySelector('.mobile-viewport .carousel');
-    const carousel = styler(carouselElement);
-    const vpw = viewport.get('width'); // 600;
+    const { carousel, vpw } = this.getCarouselHtmlData();
 
     const startX = vpw * -1;
     const endX = 0;
@@ -251,12 +244,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onMobileResize(evt: Event): void {
     if (this.screenType === ScreenType.Desktop) { return; }
-    const viewportElement = this.el.nativeElement.querySelector('.mobile-viewport');
-    const viewport = styler(viewportElement);
-    const carouselElement = this.el.nativeElement.querySelector('.mobile-viewport .carousel');
-    const carousel = styler(carouselElement);
+    const { carousel, startX } = this.getCarouselHtmlData();
 
-    const startX = viewport.get('x');
     const endX = this.activeMobileWidget.length > 0 ? (evt.target as Window).innerWidth * -1 : 0;
 
     if (startX !== endX) {
@@ -267,13 +256,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   startListeners(): void {
     this.getDisksData();
     this.getNetworkInterfaces();
+    this.listenForPoolUpdates();
+    this.getResourcesUsageUpdates();
+  }
 
-    this.ws.sub<ReportingRealtimeUpdate>('reporting.realtime').pipe(untilDestroyed(this)).subscribe((update) => {
-      if (update.cpu) {
+  getResourcesUsageUpdates(): void {
+    this.ws.subscribe('reporting.realtime').pipe(
+      map((event) => event.fields),
+      untilDestroyed(this),
+    ).subscribe((update) => {
+      if (update?.cpu) {
         this.statsDataEvent$.next({ name: 'CpuStats', data: update.cpu });
       }
 
-      if (update.virtual_memory) {
+      if (update?.virtual_memory) {
         const memStats: MemoryStatsEventData = { ...update.virtual_memory };
 
         if (update.zfs && update.zfs.arc_size !== null) {
@@ -282,7 +278,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.statsDataEvent$.next({ name: 'MemoryStats', data: memStats });
       }
 
-      if (update.interfaces) {
+      if (update?.interfaces) {
         const keys = Object.keys(update.interfaces);
         keys.forEach((key) => {
           this.statsDataEvent$.next({ name: 'NetTraffic_' + key, data: update.interfaces[key] });
@@ -353,7 +349,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       { name: 'System Information', rendered: true, id: '0' },
     ];
 
-    if (this.isHa) {
+    if (this.isHaLicensed) {
       conf.push({
         id: conf.length.toString(),
         name: 'System Information(Standby)',
@@ -372,7 +368,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       conf.push({
         id: conf.length.toString(),
         name: 'Pool',
-        identifier: `name,${pool.name}`,
+        identifier: `name,Pool:${pool.name}`,
         rendered: false,
       });
     });
@@ -399,18 +395,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       value = spl[1];
     }
 
-    switch (item.name.toLowerCase()) {
-      case 'storage':
-        return this.volumeData;
-      default: {
-        const pool = this.pools.find((pool) => pool[key as keyof Pool] === value);
-        if (!pool) {
-          console.warn(`Pool for ${item.name} [${item.identifier}] widget is not available!`);
-          return;
-        }
-        return this.volumeData && this.volumeData[pool.name];
-      }
+    if (item.name.toLowerCase() === 'storage') {
+      return this.volumeData;
     }
+
+    const dashboardPool = this.pools.find((pool) => pool[key as keyof Pool] === value.split(':')[1]);
+    if (!dashboardPool) {
+      console.warn(`Pool for ${item.name} [${item.identifier}] widget is not available!`);
+      return undefined;
+    }
+    return this.volumeData && this.volumeData[dashboardPool.name];
   }
 
   dataFromConfig(item: DashConfigItem): Subject<CoreEvent> | DashboardNicState | Pool | Pool[] {
@@ -436,7 +430,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
       case 'pool':
         if (spl) {
-          const pools = this.pools.filter((pool) => pool[key as keyof Pool] === value);
+          const pools = this.pools.filter((pool) => pool[key as keyof Pool] === value.split(':')[1]);
           if (pools.length) { data = pools[0]; }
         } else {
           console.warn('DashConfigItem has no identifier!');
@@ -560,13 +554,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private saveState(state: DashConfigItem[]): void {
-    this.ws.call('user.set_attribute', [1, 'dashState', state])
+    this.ws.call('auth.set_attribute', ['dashState', state])
       .pipe(untilDestroyed(this))
-      .subscribe((res) => {
-        if (!res) {
-          throw new Error('Unable to save Dashboard State');
-        }
-      });
+      .subscribe();
   }
 
   private loadPoolData(): void {
@@ -619,36 +609,36 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Store keys for fast lookup
       const nicKeys: { [nic: string]: number | string } = {};
-      interfaces.forEach((item, index) => {
-        nicKeys[item.name] = index.toString();
+      interfaces.forEach((networkInterface, index) => {
+        nicKeys[networkInterface.name] = index.toString();
 
         // Process Vlans (attach vlans to their parent)
-        if (item.type !== NetworkInterfaceType.Vlan && !clone[index].state.vlans) {
+        if (networkInterface.type !== NetworkInterfaceType.Vlan && !clone[index].state.vlans) {
           clone[index].state.vlans = [];
         }
 
-        if (item.type === NetworkInterfaceType.Vlan && item.state.parent) {
-          const parentIndex = parseInt(nicKeys[item.state.parent] as string);
+        if (networkInterface.type === NetworkInterfaceType.Vlan && networkInterface.state.parent) {
+          const parentIndex = parseInt(nicKeys[networkInterface.state.parent] as string);
           if (!clone[parentIndex].state.vlans) {
             clone[parentIndex].state.vlans = [];
           }
 
-          clone[parentIndex].state.vlans.push(item.state);
-          removeNics[item.name] = index;
+          clone[parentIndex].state.vlans.push(networkInterface.state);
+          removeNics[networkInterface.name] = index;
         }
 
         // Process LAGGs
-        if (item.type === NetworkInterfaceType.LinkAggregation) {
-          clone[index].state.lagg_ports = item.lag_ports;
-          item.lag_ports.forEach((nic) => {
+        if (networkInterface.type === NetworkInterfaceType.LinkAggregation) {
+          clone[index].state.lagg_ports = networkInterface.lag_ports;
+          networkInterface.lag_ports.forEach((nic) => {
             // Consolidate addresses
-            clone[index].state.aliases.forEach((item) => {
-              (item as DashboardNetworkInterfaceAlias).interface = nic;
+            clone[index].state.aliases.forEach((alias) => {
+              (alias as DashboardNetworkInterfaceAlias).interface = nic;
             });
             clone[index].state.aliases = clone[index].state.aliases.concat(clone[nicKeys[nic] as number].state.aliases);
 
             // Consolidate vlans
-            clone[index].state.vlans.forEach((item) => { item.interface = nic; });
+            clone[index].state.vlans.forEach((vlan) => { vlan.interface = nic; });
             clone[index].state.vlans = clone[index].state.vlans.concat(clone[nicKeys[nic] as number].state.vlans);
 
             // Mark interface for removal
@@ -673,6 +663,26 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       // Update NICs array
       this.nics = clone;
       this.isDataReady();
+    });
+  }
+
+  private getCarouselHtmlData(): { carousel: Styler; vpw: number; startX: number } {
+    const viewportElement = this.el.nativeElement.querySelector('.mobile-viewport');
+    const viewport = styler(viewportElement);
+    const carouselElement = this.el.nativeElement.querySelector('.mobile-viewport .carousel');
+    const carousel = styler(carouselElement);
+    const vpw = viewport.get('width') as number;
+    const startX = viewport.get('x') as number;
+
+    return { carousel, vpw, startX };
+  }
+
+  private listenForPoolUpdates(): void {
+    this.ws.subscribe('pool.query').pipe(
+      filter((event) => event.msg !== IncomingApiMessageType.Removed),
+      untilDestroyed(this),
+    ).subscribe(() => {
+      this.loadPoolData();
     });
   }
 }

@@ -24,10 +24,11 @@ import {
   NetworkInterfaceCreate,
   NetworkInterfaceUpdate,
 } from 'app/interfaces/network-interface.interface';
-import { ipv4or6cidrValidator, ipv4or6Validator } from 'app/modules/entity/entity-form/validators/ip-validation';
-import { rangeValidator } from 'app/modules/entity/entity-form/validators/range-validation';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxValidatorsService } from 'app/modules/ix-forms/services/ix-validators.service';
+import { ipv4or6cidrValidator, ipv4or6Validator } from 'app/modules/ix-forms/validators/ip-validation';
+import { rangeValidator } from 'app/modules/ix-forms/validators/range-validation/range-validation';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import {
   DefaultGatewayDialogComponent,
 } from 'app/pages/network/components/default-gateway-dialog/default-gateway-dialog.component';
@@ -39,9 +40,10 @@ import {
   interfaceAliasesToFormAliases,
   NetworkInterfaceFormAlias,
 } from 'app/pages/network/components/interface-form/network-interface-alias-control.interface';
-import { NetworkService, SystemGeneralService, WebSocketService } from 'app/services';
+import { NetworkService, SystemGeneralService } from 'app/services';
 import { CoreService } from 'app/services/core-service/core.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -54,7 +56,7 @@ export class InterfaceFormComponent implements OnInit {
   readonly defaultMtu = 1500;
 
   isLoading = false;
-  isHa = false;
+  isHaLicensed = false;
   ipLabelSuffix = '';
   failoverLabelSuffix = '';
 
@@ -132,6 +134,7 @@ export class InterfaceFormComponent implements OnInit {
     private networkService: NetworkService,
     private errorHandler: FormErrorHandlerService,
     private slideInService: IxSlideInService,
+    private snackbar: SnackbarService,
     private core: CoreService,
     private validatorsService: IxValidatorsService,
     private interfaceFormValidator: InterfaceNameValidatorService,
@@ -144,27 +147,27 @@ export class InterfaceFormComponent implements OnInit {
   }
 
   get isVlan(): boolean {
-    return this.form.get('type').value === NetworkInterfaceType.Vlan;
+    return this.form.controls.type.value === NetworkInterfaceType.Vlan;
   }
 
   get isBridge(): boolean {
-    return this.form.get('type').value === NetworkInterfaceType.Bridge;
+    return this.form.controls.type.value === NetworkInterfaceType.Bridge;
   }
 
   get isLag(): boolean {
-    return this.form.get('type').value === NetworkInterfaceType.LinkAggregation;
+    return this.form.controls.type.value === NetworkInterfaceType.LinkAggregation;
   }
 
   get isLacpLag(): boolean {
-    return this.form.get('lag_protocol').value === LinkAggregationProtocol.Lacp;
+    return this.form.controls.lag_protocol.value === LinkAggregationProtocol.Lacp;
   }
 
   get isFailover(): boolean {
-    return this.form.get('lag_protocol').value === LinkAggregationProtocol.Failover;
+    return this.form.controls.lag_protocol.value === LinkAggregationProtocol.Failover;
   }
 
   get isLoadBalanceLag(): boolean {
-    return this.form.get('lag_protocol').value === LinkAggregationProtocol.LoadBalance;
+    return this.form.controls.lag_protocol.value === LinkAggregationProtocol.LoadBalance;
   }
 
   get canHaveAliases(): boolean {
@@ -194,14 +197,14 @@ export class InterfaceFormComponent implements OnInit {
       address: ['', [Validators.required, ipv4or6cidrValidator()]],
       failover_address: ['', [
         this.validatorsService.validateOnCondition(
-          () => this.isHa,
+          () => this.isHaLicensed,
           Validators.required,
         ),
         ipv4or6Validator(),
       ]],
       failover_virtual_address: ['', [
         this.validatorsService.validateOnCondition(
-          () => this.isHa,
+          () => this.isHaLicensed,
           Validators.required,
         ),
         ipv4or6Validator(),
@@ -224,6 +227,7 @@ export class InterfaceFormComponent implements OnInit {
     request$.pipe(untilDestroyed(this)).subscribe({
       next: () => {
         this.isLoading = false;
+        this.snackbar.success(this.translate.instant('Network interface updated'));
         this.core.emit({ name: 'NetworkInterfacesChanged', data: { commit: false, checkin: false }, sender: this });
         this.slideInService.close();
 
@@ -276,9 +280,9 @@ export class InterfaceFormComponent implements OnInit {
       this.ws.call('failover.node'),
     ])
       .pipe(untilDestroyed(this))
-      .subscribe(([isHa, failoverNode]) => {
-        this.isHa = isHa;
-        if (isHa) {
+      .subscribe(([isHaLicensed, failoverNode]) => {
+        this.isHaLicensed = isHaLicensed;
+        if (isHaLicensed) {
           if (failoverNode === 'A') {
             this.ipLabelSuffix = ' ' + this.translate.instant('(This Controller)');
             this.failoverLabelSuffix = ' ' + this.translate.instant('(TrueNAS Controller 2)');
@@ -312,7 +316,7 @@ export class InterfaceFormComponent implements OnInit {
     const aliases = formAliasesToInterfaceAliases(formValues.aliases);
     params.aliases = aliases.aliases;
 
-    if (this.isHa) {
+    if (this.isHaLicensed) {
       params.failover_aliases = aliases.failover_aliases;
       params.failover_virtual_aliases = aliases.failover_virtual_aliases;
     }
@@ -340,7 +344,7 @@ export class InterfaceFormComponent implements OnInit {
       };
     }
 
-    if (this.isHa) {
+    if (this.isHaLicensed) {
       params = {
         ...params,
         failover_critical: formValues.failover_critical,

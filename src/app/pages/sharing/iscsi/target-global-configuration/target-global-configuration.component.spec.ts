@@ -12,7 +12,8 @@ import { Service } from 'app/interfaces/service.interface';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
-import { DialogService, WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
+import { WebSocketService } from 'app/services/ws.service';
 import { TargetGlobalConfigurationComponent } from './target-global-configuration.component';
 
 describe('TargetGlobalConfigurationComponent', () => {
@@ -99,8 +100,8 @@ describe('TargetGlobalConfigurationComponent', () => {
   });
 
   it('if iSCSI service is not running, asks user if service needs to be enabled', async () => {
-    const mockWebsocket = spectator.inject(MockWebsocketService);
-    mockWebsocket.mockCall('service.query', [{
+    const websocketMock = spectator.inject(MockWebsocketService);
+    websocketMock.mockCall('service.query', [{
       id: 13,
       service: ServiceName.Iscsi,
       enable: false,

@@ -19,8 +19,10 @@ import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-erro
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { JobItemComponent } from 'app/modules/jobs/components/job-item/job-item.component';
 import { FileTicketLicensedFormComponent } from 'app/pages/system/file-ticket/file-ticket-licensed-form/file-ticket-licensed-form.component';
-import { WebSocketService, DialogService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebsocketConnectionService } from 'app/services/websocket-connection.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('FileTicketLicensedFormComponent', () => {
   let spectator: Spectator<FileTicketLicensedFormComponent>;
@@ -66,6 +68,9 @@ describe('FileTicketLicensedFormComponent', () => {
       mockProvider(FormErrorHandlerService),
       mockWindow({
         open: jest.fn(),
+      }),
+      mockProvider(WebsocketConnectionService, {
+        isConnected$: of(true),
       }),
     ],
   });

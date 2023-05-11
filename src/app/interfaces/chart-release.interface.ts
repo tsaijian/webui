@@ -115,6 +115,13 @@ export type ChartReleaseQueryParams = QueryParams<ChartRelease, {
   };
 }>;
 
+export type ChartReleaseUpgradeParams = [
+  name: string,
+  params?: {
+    item_version: string;
+  },
+];
+
 export interface ChartContainerImage {
   id: string;
   update_available: boolean;
@@ -128,8 +135,9 @@ export interface ChartSchemaEnum {
 export interface ChartSchemaNodeConf {
   type: ChartSchemaType;
   attrs?: ChartSchemaNode[];
+  null?: boolean;
   items?: ChartSchemaNode[];
-  default?: unknown;
+  default?: unknown | unknown[];
   enum?: ChartSchemaEnum[];
   required?: boolean;
   value?: string;

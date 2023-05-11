@@ -1,5 +1,6 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { createComponentFactory, mockProvider, Spectator } from '@ngneat/spectator/jest';
 import { MockPipe } from 'ng-mocks';
 import { of, Subject } from 'rxjs';
@@ -7,6 +8,7 @@ import { FormatDateTimePipe } from 'app/core/pipes/format-datetime.pipe';
 import { MockWebsocketService } from 'app/core/testing/classes/mock-websocket.service';
 import { mockCall, mockWebsocket } from 'app/core/testing/utils/mock-websocket.utils';
 import { EntityModule } from 'app/modules/entity/entity.module';
+import { IxEmptyRowHarness } from 'app/modules/ix-tables/components/ix-empty-row/ix-empty-row.component.harness';
 import { IxTableModule } from 'app/modules/ix-tables/ix-table.module';
 import { IxTableHarness } from 'app/modules/ix-tables/testing/ix-table.harness';
 import { AppLoaderModule } from 'app/modules/loader/app-loader.module';
@@ -36,6 +38,7 @@ describe('BootEnvironmentListComponent', () => {
       mockProvider(DialogService, {
         confirm: jest.fn(() => of(true)),
       }),
+      mockProvider(MatSnackBar),
       mockProvider(IxSlideInService, {
         onClose$: new Subject<unknown>(),
         open: jest.fn(),
@@ -73,7 +76,7 @@ describe('BootEnvironmentListComponent', () => {
 
     const expectedRows = [
       ['', 'Name', 'Active', 'Date Created', 'Space', 'Keep', ''],
-      ['', 'CLONE', '', '2022-08-09 20:52:00', '384 KiB', 'No', 'more_vert'],
+      ['', 'CLONE', '', '2022-08-09 20:52:00', '384 KiB', 'No', ''],
       [
         '',
         '22.12-MASTER-20220808-020013',
@@ -81,7 +84,7 @@ describe('BootEnvironmentListComponent', () => {
         '2022-08-09 20:52:00',
         '3 GiB',
         'No',
-        'more_vert',
+        '',
       ],
     ];
 
@@ -93,10 +96,10 @@ describe('BootEnvironmentListComponent', () => {
     spectator.inject(MockWebsocketService).mockCall('bootenv.query', []);
     spectator.component.ngOnInit();
 
-    const table = await loader.getHarness(IxTableHarness);
-    const text = await table.getCellTextByIndex();
-
-    expect(text).toEqual([['No Boot Environments are available']]);
+    spectator.detectChanges();
+    const emptyRow = await loader.getHarness(IxEmptyRowHarness);
+    const emptyTitle = await emptyRow.getTitleText();
+    expect(emptyTitle).toBe('No records have been added yet');
   });
 
   it('should show error message when can not retrieve response', async () => {
@@ -104,9 +107,9 @@ describe('BootEnvironmentListComponent', () => {
     spectator.component.ngOnInit();
     spectator.component.isError$.next(true);
 
-    const table = await loader.getHarness(IxTableHarness);
-    const text = await table.getCellTextByIndex();
-
-    expect(text).toEqual([['Boot Environments could not be loaded']]);
+    spectator.detectChanges();
+    const emptyRow = await loader.getHarness(IxEmptyRowHarness);
+    const emptyTitle = await emptyRow.getTitleText();
+    expect(emptyTitle).toBe('Can not retrieve response');
   });
 });

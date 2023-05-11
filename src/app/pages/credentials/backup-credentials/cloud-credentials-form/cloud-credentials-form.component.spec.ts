@@ -24,8 +24,9 @@ import {
 import {
   TokenProviderFormComponent,
 } from 'app/pages/credentials/backup-credentials/cloud-credentials-form/provider-forms/token-provider-form/token-provider-form.component';
-import { DialogService, WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { CloudCredentialsFormComponent } from './cloud-credentials-form.component';
 
 jest.mock('./provider-forms/s3-provider-form/s3-provider-form.component', () => {
@@ -34,7 +35,10 @@ jest.mock('./provider-forms/s3-provider-form/s3-provider-form.component', () => 
       template: '',
     })(class {
       provider: CloudsyncProvider;
-      setValues = jest.fn() as BaseProviderFormComponent['setValues'];
+      formPatcher$ = {
+        next: jest.fn(),
+      };
+      getFormSetter$ = jest.fn(() => this.formPatcher$);
       getSubmitAttributes = jest.fn(() => ({
         s3attribute: 's3 value',
       })) as BaseProviderFormComponent['getSubmitAttributes'];
@@ -160,8 +164,8 @@ describe('CloudCredentialsFormComponent', () => {
     });
 
     it('shows an error when verification fails', async () => {
-      const mockWebsocket = spectator.inject(MockWebsocketService);
-      mockWebsocket.mockCall('cloudsync.credentials.verify', {
+      const websocketMock = spectator.inject(MockWebsocketService);
+      websocketMock.mockCall('cloudsync.credentials.verify', {
         valid: false,
         excerpt: 'Missing some important field',
         error: 'Some error',
@@ -175,11 +179,11 @@ describe('CloudCredentialsFormComponent', () => {
       const verifyButton = await loader.getHarness(MatButtonHarness.with({ text: 'Verify Credential' }));
       await verifyButton.click();
 
-      expect(spectator.inject(DialogService).errorReport).toHaveBeenCalledWith(
-        'Error',
-        'Missing some important field',
-        expect.anything(),
-      );
+      expect(spectator.inject(DialogService).error).toHaveBeenCalledWith({
+        title: 'Error',
+        message: 'Missing some important field',
+        backtrace: expect.anything(),
+      });
     });
   });
 
@@ -202,7 +206,7 @@ describe('CloudCredentialsFormComponent', () => {
 
       const providerForm = spectator.query(S3ProviderFormComponent);
       expect(providerForm).toBeTruthy();
-      expect(providerForm.setValues).toHaveBeenCalledWith({
+      expect(providerForm.getFormSetter$().next).toHaveBeenCalledWith({
         hostname: 'backup.com',
       });
     });
@@ -269,6 +273,34 @@ describe('CloudCredentialsFormComponent', () => {
       ]);
       expect(spectator.inject(IxSlideInService).close).toHaveBeenCalledWith();
       expect(spectator.inject(SnackbarService).success).toHaveBeenCalled();
+    });
+
+    it('sets default name when provider is selected and name field has not been touched by the user', async () => {
+      await form.fillForm({
+        Provider: 'Amazon S3',
+      });
+      expect(await form.getValues()).toMatchObject({
+        Name: 'Amazon S3',
+      });
+
+      await form.fillForm({
+        Provider: 'Box',
+      });
+      expect(await form.getValues()).toMatchObject({
+        Name: 'Box',
+      });
+
+      await form.fillForm({
+        Name: 'My Box',
+      });
+      await form.fillForm({
+        Provider: 'Amazon S3',
+      });
+
+      expect(await form.getValues()).toEqual({
+        Name: 'My Box',
+        Provider: 'Amazon S3',
+      });
     });
   });
 });

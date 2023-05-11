@@ -10,6 +10,7 @@ import { MenuItem, MenuItemType } from 'app/interfaces/menu-item.interface';
 import { SystemGeneralService } from 'app/services/system-general.service';
 import { WebSocketService } from 'app/services/ws.service';
 import { AppState } from 'app/store';
+import { selectIsHaLicensed } from 'app/store/ha-info/ha-info.selectors';
 import { waitForSystemFeatures, waitForSystemInfo } from 'app/store/system-info/system-info.selectors';
 
 @UntilDestroy()
@@ -96,15 +97,27 @@ export class NavigationService {
       type: MenuItemType.Link,
       tooltip: T('Apps'),
       icon: 'apps',
+      state: 'apps-old',
+      isVisible$: this.hasApps$,
+    },
+    {
+      name: T('Apps (WIP)'),
+      type: MenuItemType.SlideOut,
+      tooltip: T('Apps'),
+      icon: 'apps',
       state: 'apps',
       isVisible$: this.hasApps$,
+      sub: [
+        { name: T('Installed'), state: 'installed' },
+        { name: T('Available'), state: 'available' },
+      ],
     },
     {
       name: T('Reporting'),
       type: MenuItemType.Link,
       tooltip: T('Reports'),
       icon: 'insert_chart',
-      state: 'reportsdashboard',
+      state: 'reportsdashboard/cpu',
     },
     {
       name: T('System Settings'),
@@ -144,7 +157,7 @@ export class NavigationService {
   }
 
   private checkForFailoverSupport(): void {
-    this.ws.call('failover.licensed').pipe(untilDestroyed(this)).subscribe((hasFailover) => {
+    this.store$.select(selectIsHaLicensed).pipe(untilDestroyed(this)).subscribe((hasFailover) => {
       this.hasFailover$.next(hasFailover);
     });
   }

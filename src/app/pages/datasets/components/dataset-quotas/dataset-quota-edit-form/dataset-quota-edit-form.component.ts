@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/
 import { FormBuilder } from '@ngneat/reactive-forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, Observable, of } from 'rxjs';
+import {
+  EMPTY, Observable, of, switchMap,
+} from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { DatasetQuotaType } from 'app/enums/dataset.enum';
 import globalHelptext from 'app/helptext/global-helptext';
@@ -13,13 +15,13 @@ import { QueryFilter, QueryParams } from 'app/interfaces/query-api.interface';
 import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormatterService } from 'app/modules/ix-forms/services/ix-formatter.service';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { DialogService, WebSocketService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 
 @UntilDestroy()
 @Component({
   templateUrl: './dataset-quota-edit-form.component.html',
-  styleUrls: ['./dataset-quota-edit-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DatasetQuotaEditFormComponent {
@@ -97,6 +99,7 @@ export class DatasetQuotaEditFormComponent {
     private cdr: ChangeDetectorRef,
     private errorHandler: FormErrorHandlerService,
     private slideIn: IxSlideInService,
+    private snackbar: SnackbarService,
     protected dialogService: DialogService,
   ) {}
 
@@ -113,13 +116,13 @@ export class DatasetQuotaEditFormComponent {
         this.datasetQuota = quotas[0];
         this.isFormLoading = false;
         this.form.patchValue({
-          name: this.datasetQuota.name,
-          data_quota: this.datasetQuota.quota,
+          name: this.datasetQuota.name || '',
+          data_quota: this.datasetQuota.quota || null,
           obj_quota: this.datasetQuota.obj_quota,
         });
         this.cdr.markForCheck();
       }),
-      catchError((error: WebsocketError | Job<null, unknown[]>) => {
+      catchError((error: WebsocketError | Job) => {
         this.isFormLoading = false;
         this.errorHandler.handleWsFormError(error, this.form);
         this.cdr.markForCheck();
@@ -140,14 +143,14 @@ export class DatasetQuotaEditFormComponent {
     payload.push({
       quota_type: this.quotaType,
       id: String(this.datasetQuota.id),
-      quota_value: values.data_quota,
+      quota_value: values.data_quota || 0,
     });
     payload.push({
       quota_type: this.quotaType === DatasetQuotaType.User
         ? DatasetQuotaType.UserObj
         : DatasetQuotaType.GroupObj,
       id: String(this.datasetQuota.id),
-      quota_value: values.obj_quota,
+      quota_value: values.obj_quota || 0,
     });
 
     this.submit(values, payload);
@@ -159,27 +162,30 @@ export class DatasetQuotaEditFormComponent {
       canSubmit$ = this.getConfirmation(values.name);
     }
 
-    canSubmit$.pipe(filter(Boolean), untilDestroyed(this)).subscribe(() => {
-      this.isFormLoading = true;
-      this.ws.call('pool.dataset.set_quota', [this.datasetId, payload])
-        .pipe(untilDestroyed(this))
-        .subscribe({
-          next: () => {
-            this.isFormLoading = false;
-            this.slideIn.close();
-            this.cdr.markForCheck();
-          },
-          error: (error) => {
-            this.isFormLoading = false;
-            this.cdr.markForCheck();
-            this.errorHandler.handleWsFormError(error, this.form);
-          },
-        });
+    canSubmit$.pipe(
+      filter(Boolean),
+      switchMap(() => {
+        this.isFormLoading = true;
+        return this.ws.call('pool.dataset.set_quota', [this.datasetId, payload]);
+      }),
+      untilDestroyed(this),
+    ).subscribe({
+      next: () => {
+        this.snackbar.success(this.translate.instant('Quotas updated'));
+        this.isFormLoading = false;
+        this.slideIn.close();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        this.isFormLoading = false;
+        this.cdr.markForCheck();
+        this.errorHandler.handleWsFormError(error, this.form);
+      },
     });
   }
 
   private isUnsettingQuota(values: typeof this.form.value): boolean {
-    return values.data_quota === 0 && values.obj_quota === 0;
+    return !values.data_quota && !values.obj_quota;
   }
 
   private getConfirmation(name: string): Observable<boolean> {
@@ -190,7 +196,7 @@ export class DatasetQuotaEditFormComponent {
       message: this.quotaType === DatasetQuotaType.User
         ? this.translate.instant('Are you sure you want to delete the user quota <b>{name}</b>?', { name })
         : this.translate.instant('Are you sure you want to delete the group quota <b>{name}</b>?', { name }),
-      buttonMsg: this.translate.instant('Delete'),
+      buttonText: this.translate.instant('Delete'),
     });
   }
 }

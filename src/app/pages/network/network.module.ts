@@ -13,10 +13,11 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgxUploaderModule } from 'ngx-uploader';
 import { CommonDirectivesModule } from 'app/directives/common/common-directives.module';
 import { CastModule } from 'app/modules/cast/cast.module';
-import { EntityFormService } from 'app/modules/entity/entity-form/services/entity-form.service';
+import { NgxOrderedListboxModule } from 'app/modules/common/ordered-list/ordered-list.module';
 import { EntityModule } from 'app/modules/entity/entity.module';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxIconModule } from 'app/modules/ix-icon/ix-icon.module';
+import { TestIdModule } from 'app/modules/test-id/test-id.module';
 import { NetworkConfigurationComponent } from 'app/pages/network/components/configuration/configuration.component';
 import {
   DefaultGatewayDialogComponent,
@@ -25,9 +26,6 @@ import {
   DownloadClientConfigModalComponent,
 } from 'app/pages/network/components/download-client-config-modal/download-client-config-modal.component';
 import { InterfaceFormComponent } from 'app/pages/network/components/interface-form/interface-form.component';
-import {
-  IpmiIdentifyDialogComponent,
-} from 'app/pages/network/components/ipmi-identify-dialog/ipmi-identify-dialog.component';
 import {
   NetworkConfigurationCardComponent,
 } from 'app/pages/network/components/network-configuration-card/network-configuration-card.component';
@@ -60,6 +58,8 @@ import { routing } from './network.routing';
     IxFormsModule,
     CastModule,
     MatDialogModule,
+    TestIdModule,
+    NgxOrderedListboxModule,
   ],
   declarations: [
     StaticRouteFormComponent,
@@ -71,12 +71,10 @@ import { routing } from './network.routing';
     OpenVpnClientConfigComponent,
     NetworkConfigurationCardComponent,
     DownloadClientConfigModalComponent,
-    IpmiIdentifyDialogComponent,
     DefaultGatewayDialogComponent,
   ],
   providers: [
     NetworkService,
-    EntityFormService,
     TranslateService,
   ],
 })

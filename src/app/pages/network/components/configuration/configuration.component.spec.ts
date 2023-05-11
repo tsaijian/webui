@@ -13,9 +13,11 @@ import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-erro
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { NetworkConfigurationComponent } from 'app/pages/network/components/configuration/configuration.component';
 import {
-  DialogService, LanguageService, SystemGeneralService, WebSocketService,
+  DialogService, LanguageService, SystemGeneralService,
 } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { IxSlideIn2Service } from 'app/services/ix-slide-in2.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('NetworkConfigurationComponent', () => {
   let spectator: Spectator<NetworkConfigurationComponent>;
@@ -69,6 +71,7 @@ describe('NetworkConfigurationComponent', () => {
         mockCall('network.configuration.update'),
       ]),
       mockProvider(IxSlideInService),
+      mockProvider(IxSlideIn2Service),
       mockProvider(FormErrorHandlerService),
       mockProvider(DialogService),
       mockProvider(Router),
@@ -97,7 +100,7 @@ describe('NetworkConfigurationComponent', () => {
       'Nameserver 1': '',
       'Nameserver 2': '',
       'Nameserver 3': '',
-      'IPv4 Default Gateway': '',
+      'IPv4 Default Gateway': '192.168.30.2',
       'IPv6 Default Gateway': '',
       'Inherit domain from DHCP': false,
       'Outbound Activity': 'Allow All',

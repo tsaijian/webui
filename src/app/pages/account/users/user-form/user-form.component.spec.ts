@@ -6,7 +6,8 @@ import { Spectator } from '@ngneat/spectator';
 import { createComponentFactory, mockProvider } from '@ngneat/spectator/jest';
 import { provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
-import { mockWebsocket, mockCall } from 'app/core/testing/utils/mock-websocket.utils';
+import { allCommands } from 'app/constants/all-commands.constant';
+import { mockCall, mockWebsocket } from 'app/core/testing/utils/mock-websocket.utils';
 import { Choices } from 'app/interfaces/choices.interface';
 import { Group } from 'app/interfaces/group.interface';
 import { SmbShare } from 'app/interfaces/smb-share.interface';
@@ -17,7 +18,9 @@ import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { selectUsers } from 'app/pages/account/users/store/user.selectors';
-import { StorageService, UserService, WebSocketService } from 'app/services';
+import {
+  DialogService, StorageService, UserService, WebSocketService,
+} from 'app/services';
 import { FilesystemService } from 'app/services/filesystem.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
 import { UserFormComponent } from './user-form.component';
@@ -31,17 +34,18 @@ const mockUser = {
   full_name: 'test',
   builtin: false,
   smb: true,
+  ssh_password_enabled: true,
   password_disabled: false,
   locked: false,
-  sudo: false,
-  sudo_nopasswd: false,
-  sudo_commands: [],
+  sudo_commands_nopasswd: ['rm -rf /'],
+  sudo_commands: [allCommands],
   email: null,
   sshpubkey: null,
   group: {
     id: 101,
   },
   groups: [101],
+  immutable: false,
 } as User;
 
 describe('UserFormComponent', () => {
@@ -74,6 +78,9 @@ describe('UserFormComponent', () => {
         }] as Group[]),
         mockCall('sharing.smb.query', [{ path: '/mnt/users' }] as SmbShare[]),
       ]),
+      mockProvider(DialogService, {
+        confirm: jest.fn(() => of(true)),
+      }),
       mockProvider(IxSlideInService, {
         onClose$: of(true),
       }),
@@ -194,6 +201,7 @@ describe('UserFormComponent', () => {
 
       expect(values).toEqual({
         'Auxiliary Groups': ['test-group'],
+        'SSH password login enabled': true,
         'Confirm New Password': '',
         'Create New Primary Group': false,
         'Disable Password': false,
@@ -201,15 +209,20 @@ describe('UserFormComponent', () => {
         'Home Directory Permissions': '700',
         'Home Directory': '/home/test',
         'Lock User': false,
-        'Permit Sudo': false,
         'Primary Group': 'test-group',
         'Samba Authentication': true,
         'Authorized Keys': '',
+        'Upload SSH Key': [],
+        'Create Home Directory': false,
         UID: '1004',
         Email: '',
         'New Password': '',
         Shell: 'bash',
         Username: 'test',
+        'Allowed sudo commands': [],
+        'Allow all sudo commands': true,
+        'Allowed sudo commands with no password': ['rm -rf /'],
+        'Allow all sudo commands with no password': false,
       });
     });
 
@@ -220,12 +233,16 @@ describe('UserFormComponent', () => {
         'Full Name': 'updated',
         'Home Directory Permissions': '755',
         'Home Directory': '/home/updated',
-        'Permit Sudo': true,
         'Primary Group': 'mock-group',
+        'Create Home Directory': true,
         'Samba Authentication': false,
         'Lock User': true,
         Shell: 'zsh',
         Username: 'updated',
+        'Allow all sudo commands': false,
+        'Allowed sudo commands': ['pwd'],
+        'Allowed sudo commands with no password': [],
+        'Allow all sudo commands with no password': true,
       });
 
       const saveButton = await loader.getHarness(MatButtonHarness.with({ text: 'Save' }));
@@ -242,10 +259,13 @@ describe('UserFormComponent', () => {
           home: '/home/updated',
           locked: true,
           password_disabled: false,
+          home_create: true,
           shell: '/usr/bin/zsh',
           smb: false,
+          ssh_password_enabled: true,
           sshpubkey: null,
-          sudo: true,
+          sudo_commands: ['pwd'],
+          sudo_commands_nopasswd: [allCommands],
           username: 'updated',
         },
       ]);
@@ -265,13 +285,12 @@ describe('UserFormComponent', () => {
       expect(disabled).toEqual(expect.objectContaining({
         'Confirm Password': true,
         'Lock User': true,
-        'Permit Sudo': true,
         Password: true,
       }));
     });
 
     it('check form inputs when user is builtin', async () => {
-      spectator.component.setupForm({ ...mockUser, builtin: true });
+      spectator.component.setupForm({ ...mockUser, builtin: true, immutable: true });
 
       const form = await loader.getHarness(IxFormHarness);
       const disabled = await form.getDisabledState();

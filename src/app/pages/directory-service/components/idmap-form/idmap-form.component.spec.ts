@@ -4,19 +4,30 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { Router } from '@angular/router';
 import { createComponentFactory, mockProvider, Spectator } from '@ngneat/spectator/jest';
+import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 import { fakeSuccessfulJob } from 'app/core/testing/utils/fake-job.utils';
-import { mockCall, mockJob, mockWebsocket } from 'app/core/testing/utils/mock-websocket.utils';
+import {
+  mockCall, mockJob, mockWebsocket,
+} from 'app/core/testing/utils/mock-websocket.utils';
 import { IdmapBackend, IdmapName, IdmapSslEncryptionMode } from 'app/enums/idmap.enum';
 import helptext from 'app/helptext/directory-service/idmap';
 import { IdmapBackendOptions } from 'app/interfaces/idmap-backend-options.interface';
 import { Idmap } from 'app/interfaces/idmap.interface';
 import { EntityModule } from 'app/modules/entity/entity.module';
+import {
+  WithManageCertificatesLinkComponent,
+} from 'app/modules/ix-forms/components/with-manage-certificates-link/with-manage-certificates-link.component';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { IdmapFormComponent } from 'app/pages/directory-service/components/idmap-form/idmap-form.component';
-import { DialogService, IdmapService, WebSocketService } from 'app/services';
+import {
+  DialogService, IdmapService,
+} from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { IxSlideIn2Service } from 'app/services/ix-slide-in2.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('IdmapFormComponent', () => {
   let spectator: Spectator<IdmapFormComponent>;
@@ -43,6 +54,9 @@ describe('IdmapFormComponent', () => {
       ReactiveFormsModule,
       IxFormsModule,
       EntityModule,
+    ],
+    declarations: [
+      MockComponent(WithManageCertificatesLinkComponent),
     ],
     providers: [
       mockWebsocket([
@@ -82,7 +96,9 @@ describe('IdmapFormComponent', () => {
         } as unknown as IdmapBackendOptions),
       }),
       mockProvider(IxSlideInService),
+      mockProvider(IxSlideIn2Service),
       mockProvider(Router),
+      mockProvider(SnackbarService),
       mockProvider(DialogService, {
         confirm: jest.fn(() => of(false)),
       }),
@@ -236,7 +252,7 @@ describe('IdmapFormComponent', () => {
     expect(confirm).toHaveBeenCalledWith({
       title: helptext.idmap.clear_cache_dialog.title,
       message: helptext.idmap.clear_cache_dialog.message,
-      hideCheckBox: true,
+      hideCheckbox: true,
     });
     expect(spectator.inject(WebSocketService).job).toHaveBeenCalledWith('idmap.clear_idmap_cache', []);
   });

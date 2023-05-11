@@ -9,8 +9,9 @@ import { FtpConfig } from 'app/interfaces/ftp-config.interface';
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { ServiceFtpComponent } from 'app/pages/services/components/service-ftp/service-ftp.component';
-import { DialogService, SystemGeneralService, WebSocketService } from 'app/services';
+import { DialogService, SystemGeneralService } from 'app/services';
 import { FilesystemService } from 'app/services/filesystem.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('ServiceFtpComponent', () => {
   let spectator: Spectator<ServiceFtpComponent>;

@@ -9,13 +9,13 @@ import { SystemFeatures } from 'app/interfaces/events/sys-info-event.interface';
 import { WebSocketService } from 'app/services';
 import { adminUiInitialized } from 'app/store/admin-panel/admin.actions';
 import {
-  haStatusLoaded, loadHaStatus, systemFeaturesLoaded, systemInfoLoaded,
+  systemFeaturesLoaded, systemHaCapabilityLoaded, systemInfoLoaded, systemInfoUpdated,
 } from 'app/store/system-info/system-info.actions';
 
 @Injectable()
 export class SystemInfoEffects {
   loadSystemInfo = createEffect(() => this.actions$.pipe(
-    ofType(adminUiInitialized),
+    ofType(adminUiInitialized, systemInfoUpdated),
     mergeMap(() => {
       return this.ws.call('system.info').pipe(
         map((systemInfo) => systemInfoLoaded({ systemInfo })),
@@ -31,7 +31,6 @@ export class SystemInfoEffects {
   loadSystemFeatures = createEffect(() => this.actions$.pipe(
     ofType(systemInfoLoaded),
     switchMap(({ systemInfo }) => {
-      this.window.sessionStorage.setItem('systemInfoLoaded', Date.now().toString());
       const features: SystemFeatures = {
         HA: false,
         enclosure: false,
@@ -50,27 +49,17 @@ export class SystemInfoEffects {
       // HIGH AVAILABILITY SUPPORT
       if ((profile.license && profile.license.system_serial_ha) || profile.system_product === 'BHYVE') {
         features.HA = true;
-        return of(
-          systemFeaturesLoaded({ systemFeatures: features }),
-          loadHaStatus(),
-        );
+        return of(systemFeaturesLoaded({ systemFeatures: features }));
       }
       return of(systemFeaturesLoaded({ systemFeatures: features }));
     }),
   ));
 
-  loadHaStatus = createEffect(() => this.actions$.pipe(
-    ofType(loadHaStatus),
+  loadIsSystemHaCapable = createEffect(() => this.actions$.pipe(
+    ofType(adminUiInitialized),
     mergeMap(() => {
-      return this.ws.call('failover.disabled.reasons').pipe(
-        map((failoverDisabledReasons) => {
-          const haEnabled = failoverDisabledReasons.length === 0;
-
-          const enabledText = failoverDisabledReasons.length === 0 ? 'HA Enabled' : 'HA Disabled';
-
-          this.window.sessionStorage.setItem('ha_status', haEnabled.toString());
-          return haStatusLoaded({ haStatus: { status: enabledText, reasons: failoverDisabledReasons } });
-        }),
+      return this.ws.call('system.is_ha_capable').pipe(
+        map((isSystemHaCapable: boolean) => systemHaCapabilityLoaded({ isSystemHaCapable })),
       );
     }),
   ));

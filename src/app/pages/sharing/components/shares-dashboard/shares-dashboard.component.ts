@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { filter, map } from 'rxjs/operators';
 import { ServiceName, serviceNames } from 'app/enums/service-name.enum';
 import { ServiceStatus } from 'app/enums/service-status.enum';
+import { assertUnreachable } from 'app/helpers/assert-unreachable.utils';
 import { helptextSharingWebdav, helptextSharingSmb, helptextSharingNfs } from 'app/helptext/sharing';
 import { ApiDirectory } from 'app/interfaces/api-directory.interface';
 import { IscsiTarget } from 'app/interfaces/iscsi.interface';
@@ -24,7 +25,7 @@ import {
 import {
   AppTableHeaderAction,
 } from 'app/modules/entity/table/table.component';
-import { EntityUtils } from 'app/modules/entity/utils';
+import { IscsiWizardComponent } from 'app/pages/sharing/iscsi/iscsi-wizard/iscsi-wizard.component';
 import { TargetFormComponent } from 'app/pages/sharing/iscsi/target/target-form/target-form.component';
 import { NfsFormComponent } from 'app/pages/sharing/nfs/nfs-form/nfs-form.component';
 import { SmbAclComponent } from 'app/pages/sharing/smb/smb-acl/smb-acl.component';
@@ -32,10 +33,11 @@ import { SmbFormComponent } from 'app/pages/sharing/smb/smb-form/smb-form.compon
 import { WebdavFormComponent } from 'app/pages/sharing/webdav/webdav-form/webdav-form.component';
 import {
   DialogService,
-  IscsiService, SystemGeneralService,
-  WebSocketService,
+  IscsiService,
 } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService, ResponseOnClose } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 enum ShareType {
   Smb = 'smb',
@@ -83,15 +85,33 @@ export class SharesDashboardComponent implements AfterViewInit {
   readonly servicesToCheck = [ServiceName.Cifs, ServiceName.Iscsi, ServiceName.WebDav, ServiceName.Nfs];
   readonly ServiceStatus = ServiceStatus;
 
+  isClustered = false;
+
   constructor(
     private ws: WebSocketService,
-    private dialog: DialogService,
+    private dialogService: DialogService,
     private router: Router,
     private translate: TranslateService,
+    private errorHandler: ErrorHandlerService,
     private slideInService: IxSlideInService,
-    private systemGeneralService: SystemGeneralService,
   ) {
     this.getInitialServiceStatus();
+    this.loadClusteredState();
+  }
+
+  loadClusteredState(): void {
+    this.ws.call('cluster.utils.is_clustered').pipe(untilDestroyed(this)).subscribe((isClustered) => {
+      this.isClustered = isClustered;
+      if (this.isClustered) {
+        this.smbTableConf.addActionDisabled = true;
+        this.smbTableConf.deleteActionDisabled = true;
+        this.smbTableConf.tooltip = {
+          header: this.translate.instant('Windows (SMB) Shares'),
+          message: this.translate.instant('This share is configured through TrueCommand'),
+        };
+        _.find(this.smbTableConf.columns, { name: helptextSharingSmb.column_enabled }).disabled = true;
+      }
+    });
   }
 
   getInitialServiceStatus(): void {
@@ -199,7 +219,7 @@ export class SharesDashboardComponent implements AfterViewInit {
             {
               name: helptextSharingNfs.column_enabled,
               prop: 'enabled',
-              width: '60px',
+              width: '100px',
               slideToggle: true,
               onChange: (row: NfsShare) => this.onSlideToggle(ShareType.Nfs, row, 'enabled'),
             },
@@ -249,7 +269,7 @@ export class SharesDashboardComponent implements AfterViewInit {
             },
           ],
           add: () => {
-            this.router.navigate(['/', 'sharing', 'iscsi', 'wizard']);
+            this.slideInService.open(IscsiWizardComponent);
           },
           addButtonLabel: this.translate.instant('Wizard'),
           edit: (row: IscsiTarget) => {
@@ -304,7 +324,7 @@ export class SharesDashboardComponent implements AfterViewInit {
             {
               prop: 'enabled',
               name: helptextSharingWebdav.column_enabled,
-              width: '60px',
+              width: '100px',
               slideToggle: true,
               onChange: (row: WebDavShare) => this.onSlideToggle(ShareType.WebDav, row, 'enabled'),
             },
@@ -345,12 +365,12 @@ export class SharesDashboardComponent implements AfterViewInit {
           parent: this,
           columns: [
             { name: helptextSharingSmb.column_name, prop: 'name' },
-            { name: helptextSharingSmb.column_path, prop: 'path', showLockedStatus: true },
+            { name: helptextSharingSmb.column_path, prop: 'path_local', showLockedStatus: true },
             { name: helptextSharingSmb.column_comment, prop: 'comment', hiddenIfEmpty: true },
             {
               name: helptextSharingSmb.column_enabled,
               prop: 'enabled',
-              width: '60px',
+              width: '100px',
               slideToggle: true,
               onChange: (row: SmbShare) => this.onSlideToggle(ShareType.Smb, row, 'enabled'),
             },
@@ -360,8 +380,15 @@ export class SharesDashboardComponent implements AfterViewInit {
             this.slideInService.open(SmbFormComponent);
           },
           edit: (row: SmbShare) => {
-            const form = this.slideInService.open(SmbFormComponent);
-            form.setSmbShareForEdit(row);
+            if (this.isClustered) {
+              this.dialogService.info(
+                this.translate.instant('Windows (SMB) Shares'),
+                this.translate.instant('This share is configured through TrueCommand'),
+              );
+            } else {
+              const form = this.slideInService.open(SmbFormComponent);
+              form.setSmbShareForEdit(row);
+            }
           },
           afterGetData: (data: SmbShare[]) => {
             this.smbHasItems = 0;
@@ -373,14 +400,12 @@ export class SharesDashboardComponent implements AfterViewInit {
           },
           limitRows: 5,
           isActionVisible: (actionId: string, row: SmbShare) => {
-            switch (actionId) {
-              case 'edit_acl': {
-                const rowName = row.path.replace('/mnt/', '');
-                return rowName.includes('/');
-              }
-              default:
-                return true;
+            if (actionId === 'edit_acl') {
+              const rowName = row.path.replace('/mnt/', '');
+              return rowName.includes('/');
             }
+
+            return true;
           },
           getActions: () => {
             return [
@@ -388,6 +413,7 @@ export class SharesDashboardComponent implements AfterViewInit {
                 icon: 'share',
                 name: 'share_acl',
                 matTooltip: helptextSharingSmb.action_share_acl,
+                disabled: this.isClustered,
                 onClick: (row: SmbShare) => {
                   this.ws.call('pool.dataset.path_in_locked_datasets', [row.path]).pipe(untilDestroyed(this)).subscribe(
                     (isLocked) => {
@@ -412,14 +438,16 @@ export class SharesDashboardComponent implements AfterViewInit {
                 name: 'edit_acl',
                 matTooltip: helptextSharingSmb.action_edit_acl,
                 onClick: (row: SmbShare) => {
-                  const rowName = row.path.replace('/mnt/', '');
-                  const datasetId = rowName;
                   this.ws.call('pool.dataset.path_in_locked_datasets', [row.path]).pipe(untilDestroyed(this)).subscribe(
                     (isLocked) => {
                       if (isLocked) {
                         this.lockedPathDialog(row.path);
                       } else {
-                        this.router.navigate(['/', 'datasets', datasetId, 'permissions', 'acl']);
+                        this.router.navigate(['/', 'datasets', 'acl', 'edit'], {
+                          queryParams: {
+                            path: row.path_local,
+                          },
+                        });
                       }
                     },
                   );
@@ -429,6 +457,9 @@ export class SharesDashboardComponent implements AfterViewInit {
           },
         };
       }
+      default:
+        assertUnreachable(shareType);
+        throw new Error('Unsupported share type');
     }
   }
 
@@ -501,6 +532,8 @@ export class SharesDashboardComponent implements AfterViewInit {
         return 'third';
       case 3:
         return 'fourth';
+      default:
+        throw new Error('Unsupported index');
     }
   }
 
@@ -524,9 +557,9 @@ export class SharesDashboardComponent implements AfterViewInit {
       next: (updatedEntity) => {
         row[param] = updatedEntity[param];
       },
-      error: (err: WebsocketError) => {
+      error: (error: WebsocketError) => {
         row[param] = !row[param];
-        new EntityUtils().handleWsError(this, err, this.dialog);
+        this.dialogService.error(this.errorHandler.parseWsError(error));
       },
     });
   }
@@ -566,7 +599,7 @@ export class SharesDashboardComponent implements AfterViewInit {
               next: (hasChanged: boolean) => {
                 if (hasChanged) {
                   if (service.state === ServiceStatus.Running && rpc === 'service.stop') {
-                    this.dialog.warn(
+                    this.dialogService.warn(
                       this.translate.instant('Service failed to stop'),
                       this.translate.instant(
                         'The {service} service failed to stop.',
@@ -577,7 +610,7 @@ export class SharesDashboardComponent implements AfterViewInit {
                   service.state = ServiceStatus.Running;
                 } else {
                   if (service.state === ServiceStatus.Stopped && rpc === 'service.start') {
-                    this.dialog.warn(
+                    this.dialogService.warn(
                       this.translate.instant('Service failed to start'),
                       this.translate.instant(
                         'The {service} service failed to start.',
@@ -589,7 +622,7 @@ export class SharesDashboardComponent implements AfterViewInit {
                 }
                 this.updateTableServiceStatus(service);
               },
-              error: (error) => {
+              error: (error: WebsocketError) => {
                 let message = this.translate.instant(
                   'Error starting service {serviceName}.',
                   { serviceName: serviceNames.get(service.service) || service.service },
@@ -600,7 +633,11 @@ export class SharesDashboardComponent implements AfterViewInit {
                     { serviceName: serviceNames.get(service.service) || service.service },
                   );
                 }
-                this.dialog.errorReport(message, error.reason, error.trace.formatted);
+                this.dialogService.error({
+                  title: message,
+                  message: error.reason,
+                  backtrace: error.trace.formatted,
+                });
               },
             });
         },
@@ -632,9 +669,9 @@ export class SharesDashboardComponent implements AfterViewInit {
   }
 
   lockedPathDialog(path: string): void {
-    this.dialog.errorReport(
-      helptextSharingSmb.action_edit_acl_dialog.title,
-      this.translate.instant('The path <i>{path}</i> is in a locked dataset.', { path }),
-    );
+    this.dialogService.error({
+      title: helptextSharingSmb.action_edit_acl_dialog.title,
+      message: this.translate.instant('The path <i>{path}</i> is in a locked dataset.', { path }),
+    });
   }
 }

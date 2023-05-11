@@ -13,12 +13,14 @@ export interface SshConnectionSetup {
   manual_setup?: SshCredentials;
   semi_automatic_setup?: {
     url: string;
+    admin_username: string;
     password: string;
     username: string;
     connect_timeout: number;
     cipher: CipherType;
     token?: string;
     otp_token?: string;
+    sudo?: boolean;
   };
 }
 

@@ -10,8 +10,9 @@ import { IxSelectHarness } from 'app/modules/ix-forms/components/ix-select/ix-se
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { AppLoaderModule } from 'app/modules/loader/app-loader.module';
 import {
-  DialogService, ServicesService, StorageService, WebSocketService,
+  DialogService, ServicesService, StorageService,
 } from 'app/services';
+import { WebSocketService } from 'app/services/ws.service';
 import { DownloadClientConfigModalComponent } from './download-client-config-modal.component';
 
 describe('DownloadClientConfigModalComponent', () => {
@@ -25,7 +26,7 @@ describe('DownloadClientConfigModalComponent', () => {
       IxFormsModule,
     ],
     providers: [
-      DialogService,
+      mockProvider(DialogService),
       mockWebsocket([
         mockCall('interface.websocket_local_ip', '127.0.0.1'),
       ]),

@@ -10,10 +10,12 @@ import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { choicesToOptions } from 'app/helpers/options.helper';
 import helptext from 'app/helptext/services/components/service-dynamic-dns';
-import { numberValidator } from 'app/modules/entity/entity-form/validators/number-validation';
-import { EntityUtils } from 'app/modules/entity/utils';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
-import { DialogService, WebSocketService } from 'app/services';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
+import { DialogService } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 const customProvider = 'custom';
 
@@ -36,7 +38,7 @@ export class ServiceDynamicDnsComponent implements OnInit {
     custom_ddns_server: [''],
     custom_ddns_path: [''],
     domain: [[] as string[], [Validators.required]],
-    period: [null as number, numberValidator()],
+    period: [null as number],
     username: ['', [Validators.required]],
     password: [''],
   });
@@ -66,12 +68,14 @@ export class ServiceDynamicDnsComponent implements OnInit {
 
   constructor(
     private ws: WebSocketService,
-    private errorHandler: FormErrorHandlerService,
+    private formErrorHandler: FormErrorHandlerService,
     private cdr: ChangeDetectorRef,
+    private errorHandler: ErrorHandlerService,
     private fb: FormBuilder,
     private dialogService: DialogService,
     private translate: TranslateService,
     private router: Router,
+    private snackbar: SnackbarService,
   ) {}
 
   ngOnInit(): void {
@@ -84,16 +88,16 @@ export class ServiceDynamicDnsComponent implements OnInit {
           this.form.patchValue(config);
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          new EntityUtils().handleWsError(this, error, this.dialogService);
+        error: (error: WebsocketError) => {
+          this.dialogService.error(this.errorHandler.parseWsError(error));
           this.isFormLoading = false;
           this.cdr.markForCheck();
         },
       });
 
     this.subscriptions.push(
-      this.form.controls['custom_ddns_server'].enabledWhile(this.isCustomProvider$),
-      this.form.controls['custom_ddns_path'].enabledWhile(this.isCustomProvider$),
+      this.form.controls.custom_ddns_server.enabledWhile(this.isCustomProvider$),
+      this.form.controls.custom_ddns_path.enabledWhile(this.isCustomProvider$),
     );
   }
 
@@ -104,18 +108,15 @@ export class ServiceDynamicDnsComponent implements OnInit {
     this.ws.call('dyndns.update', [values]).pipe(untilDestroyed(this)).subscribe({
       next: () => {
         this.isFormLoading = false;
+        this.snackbar.success(this.translate.instant('Service configuration saved'));
         this.cdr.markForCheck();
         this.router.navigate(['/services']);
       },
       error: (error) => {
         this.isFormLoading = false;
-        this.errorHandler.handleWsFormError(error, this.form);
+        this.formErrorHandler.handleWsFormError(error, this.form);
         this.cdr.markForCheck();
       },
     });
-  }
-
-  onCancel(): void {
-    this.router.navigate(['/services']);
   }
 }

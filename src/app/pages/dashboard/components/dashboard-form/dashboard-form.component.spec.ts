@@ -7,10 +7,11 @@ import { mockCall, mockWebsocket } from 'app/core/testing/utils/mock-websocket.u
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { DashboardFormComponent } from 'app/pages/dashboard/components/dashboard-form/dashboard-form.component';
 import { DashConfigItem } from 'app/pages/dashboard/components/widget-controller/widget-controller.component';
-import { WebSocketService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('DashboardFormComponent', () => {
   let spectator: Spectator<DashboardFormComponent>;
@@ -26,10 +27,11 @@ describe('DashboardFormComponent', () => {
     ],
     providers: [
       mockWebsocket([
-        mockCall('user.set_attribute'),
+        mockCall('auth.set_attribute'),
       ]),
       mockProvider(IxSlideInService),
       mockProvider(FormErrorHandlerService),
+      mockProvider(SnackbarService),
     ],
   });
 
@@ -56,7 +58,7 @@ describe('DashboardFormComponent', () => {
 
     it('sends a create payload to websocket and closes modal when save is pressed', async () => {
       const form = await loader.getHarness(IxFormHarness);
-      const clone = Object.assign([], dashState);
+      const clone = Object.assign([] as DashConfigItem[], dashState);
       clone[1].rendered = true;
 
       await form.fillForm({
@@ -66,7 +68,7 @@ describe('DashboardFormComponent', () => {
       const saveButton = await loader.getHarness(MatButtonHarness.with({ text: 'Save' }));
       await saveButton.click();
 
-      expect(ws.call).toHaveBeenCalledWith('user.set_attribute', [1, 'dashState', clone]);
+      expect(ws.call).toHaveBeenCalledWith('auth.set_attribute', ['dashState', clone]);
     });
   });
 });

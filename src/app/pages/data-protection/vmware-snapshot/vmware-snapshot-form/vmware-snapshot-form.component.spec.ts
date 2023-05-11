@@ -10,8 +10,9 @@ import { MatchDatastoresWithDatasets, VmwareSnapshot } from 'app/interfaces/vmwa
 import { IxFormsModule } from 'app/modules/ix-forms/ix-forms.module';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
-import { DialogService, WebSocketService } from 'app/services';
+import { DialogService } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 import { VmwareSnapshotFormComponent } from './vmware-snapshot-form.component';
 
 describe('VmwareSnapshotFormComponent', () => {
@@ -40,12 +41,12 @@ describe('VmwareSnapshotFormComponent', () => {
             {
               type: DatasetType.Filesystem,
               name: 'fs01',
-              description: 'filesysyem 01',
+              description: 'filesystem 01',
             },
             {
               type: DatasetType.Filesystem,
               name: 'fs02',
-              description: 'filesysyem 02',
+              description: 'filesystem 02',
             },
           ],
           datastores: [
@@ -141,7 +142,7 @@ describe('VmwareSnapshotFormComponent', () => {
 
     expect(spectator.inject(DialogService).confirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: 'The filesystem fs02 is filesysyem 02, but datastore ds01 is datastore 01. Is this correct?',
+        message: 'The filesystem fs02 is filesystem 02, but datastore ds01 is datastore 01. Is this correct?',
       }),
     );
 

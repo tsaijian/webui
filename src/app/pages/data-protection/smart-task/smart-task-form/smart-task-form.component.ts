@@ -13,13 +13,13 @@ import {
   crontabToScheduleWithoutMinutes,
 } from 'app/modules/scheduler/utils/crontab-to-schedule.utils';
 import { scheduleToCrontab } from 'app/modules/scheduler/utils/schedule-to-crontab.utils';
-import { WebSocketService } from 'app/services';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
   templateUrl: './smart-task-form.component.html',
-  styleUrls: ['./smart-task-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SmartTaskFormComponent {
@@ -36,7 +36,7 @@ export class SmartTaskFormComponent {
   form = this.fb.group({
     disks: [[] as string[]],
     all_disks: [false],
-    type: [null as SmartTestType],
+    type: [null as SmartTestType, Validators.required],
     desc: [''],
     schedule: ['', Validators.required],
   });
@@ -63,6 +63,7 @@ export class SmartTaskFormComponent {
     private translate: TranslateService,
     private slideInService: IxSlideInService,
     private cdr: ChangeDetectorRef,
+    private snackbar: SnackbarService,
     private errorHandler: FormErrorHandlerService,
   ) {}
 
@@ -94,6 +95,11 @@ export class SmartTaskFormComponent {
 
     request$.pipe(untilDestroyed(this)).subscribe({
       next: () => {
+        if (this.isNew) {
+          this.snackbar.success(this.translate.instant('Task created'));
+        } else {
+          this.snackbar.success(this.translate.instant('Task updated'));
+        }
         this.isLoading = false;
         this.slideInService.close();
       },

@@ -14,16 +14,18 @@ import { RsyncMode, RsyncSshConnectMode } from 'app/enums/rsync-mode.enum';
 import helptext from 'app/helptext/data-protection/resync/resync-form';
 import { KeychainSshCredentials } from 'app/interfaces/keychain-credential.interface';
 import { RsyncTask, RsyncTaskUpdate } from 'app/interfaces/rsync-task.interface';
-import { portRangeValidator } from 'app/modules/entity/entity-form/validators/range-validation';
 import { UserComboboxProvider } from 'app/modules/ix-forms/classes/user-combobox-provider';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
 import { IxValidatorsService } from 'app/modules/ix-forms/services/ix-validators.service';
+import { portRangeValidator } from 'app/modules/ix-forms/validators/range-validation/range-validation';
 import { crontabToSchedule } from 'app/modules/scheduler/utils/crontab-to-schedule.utils';
 import { scheduleToCrontab } from 'app/modules/scheduler/utils/schedule-to-crontab.utils';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { SshConnectionFormComponent } from 'app/pages/credentials/backup-credentials/ssh-connection-form/ssh-connection-form.component';
-import { KeychainCredentialService, UserService, WebSocketService } from 'app/services';
+import { KeychainCredentialService, UserService } from 'app/services';
 import { FilesystemService } from 'app/services/filesystem.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -117,6 +119,7 @@ export class RsyncTaskFormComponent implements OnInit {
     private errorHandler: FormErrorHandlerService,
     private userService: UserService,
     private filesystemService: FilesystemService,
+    private snackbar: SnackbarService,
     protected keychainCredentialService: KeychainCredentialService,
     protected matDialog: MatDialog,
     private validatorsService: IxValidatorsService,
@@ -207,12 +210,19 @@ export class RsyncTaskFormComponent implements OnInit {
 
     request$.pipe(untilDestroyed(this)).subscribe({
       next: () => {
+        if (this.isNew) {
+          this.snackbar.success(this.translate.instant('Task created'));
+        } else {
+          this.snackbar.success(this.translate.instant('Task updated'));
+        }
         this.isLoading = false;
-        this.slideInService.close();
+        this.slideInService.close(null, true);
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorHandler.handleWsFormError(error, this.form);
+        this.errorHandler.handleWsFormError(error, this.form, {
+          remotehost: 'remotepath',
+        });
         this.cdr.markForCheck();
       },
     });

@@ -12,9 +12,10 @@ import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-erro
 import { IxFormHarness } from 'app/modules/ix-forms/testing/ix-form.harness';
 import { SshKeypairFormComponent } from 'app/pages/credentials/backup-credentials/ssh-keypair-form/ssh-keypair-form.component';
 import {
-  AppLoaderService, DialogService, StorageService, WebSocketService,
+  AppLoaderService, DialogService, StorageService,
 } from 'app/services';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 describe('SshKeypairFormComponent', () => {
   let spectator: Spectator<SshKeypairFormComponent>;

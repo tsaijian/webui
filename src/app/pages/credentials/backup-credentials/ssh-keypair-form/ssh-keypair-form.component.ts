@@ -2,18 +2,22 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/
 import { Validators } from '@angular/forms';
 import { FormBuilder } from '@ngneat/reactive-forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { KeychainCredentialType } from 'app/enums/keychain-credential-type.enum';
 import helptext from 'app/helptext/system/ssh-keypairs';
 import { KeychainCredentialUpdate, KeychainSshKeyPair } from 'app/interfaces/keychain-credential.interface';
-import { atLeastOne } from 'app/modules/entity/entity-form/validators/at-least-one-validation';
-import { EntityUtils } from 'app/modules/entity/utils';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { FormErrorHandlerService } from 'app/modules/ix-forms/services/form-error-handler.service';
+import { atLeastOne } from 'app/modules/ix-forms/validators/at-least-one-validation';
+import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import {
-  AppLoaderService, DialogService, StorageService, UserService, WebSocketService,
+  AppLoaderService, DialogService, StorageService,
 } from 'app/services';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -30,7 +34,7 @@ export class SshKeypairFormComponent {
   isFormLoading = false;
 
   form = this.fb.group({
-    name: ['', [Validators.required, Validators.pattern(UserService.namePattern)]],
+    name: ['', Validators.required],
     private_key: [''],
     public_key: ['', atLeastOne('private_key', [helptext.private_key_placeholder, helptext.public_key_placeholder])],
   });
@@ -51,7 +55,10 @@ export class SshKeypairFormComponent {
     private ws: WebSocketService,
     private slideInService: IxSlideInService,
     private cdr: ChangeDetectorRef,
-    private errorHandler: FormErrorHandlerService,
+    private translate: TranslateService,
+    private snackbar: SnackbarService,
+    private errorHandler: ErrorHandlerService,
+    private formErrorHandler: FormErrorHandlerService,
     private loader: AppLoaderService,
     private dialogService: DialogService,
     private storage: StorageService,
@@ -76,16 +83,16 @@ export class SshKeypairFormComponent {
           private_key: keyPair.private_key,
         });
       },
-      error: (err) => {
+      error: (err: WebsocketError) => {
         this.loader.close();
-        new EntityUtils().handleWsError(this, err, this.dialogService);
+        this.dialogService.error(this.errorHandler.parseWsError(err));
       },
     });
   }
 
   onDownloadKey(keyType: 'private_key' | 'public_key'): void {
     const name = this.form.value.name;
-    const key = this.form.get(keyType).value;
+    const key = this.form.controls[keyType].value;
     const filename = `${name}_${keyType}_rsa`;
     const blob = new Blob([key], { type: 'text/plain' });
     this.storage.downloadBlob(blob, filename);
@@ -117,13 +124,19 @@ export class SshKeypairFormComponent {
 
     request$.pipe(untilDestroyed(this)).subscribe({
       next: () => {
+        if (this.isNew) {
+          this.snackbar.success(this.translate.instant('SSH Keypair created'));
+        } else {
+          this.snackbar.success(this.translate.instant('SSH Keypair updated'));
+        }
+
         this.isFormLoading = false;
         this.cdr.markForCheck();
         this.slideInService.close();
       },
       error: (error) => {
         this.isFormLoading = false;
-        this.errorHandler.handleWsFormError(error, this.form);
+        this.formErrorHandler.handleWsFormError(error, this.form);
         this.cdr.markForCheck();
       },
     });

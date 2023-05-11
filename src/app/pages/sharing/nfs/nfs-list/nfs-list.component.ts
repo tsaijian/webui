@@ -1,15 +1,17 @@
 import { Component } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 import { shared, helptextSharingNfs } from 'app/helptext/sharing';
 import { NfsShare } from 'app/interfaces/nfs-share.interface';
+import { WebsocketError } from 'app/interfaces/websocket-error.interface';
 import { EntityTableComponent } from 'app/modules/entity/entity-table/entity-table.component';
 import { EntityTableConfig } from 'app/modules/entity/entity-table/entity-table.interface';
-import { EntityUtils } from 'app/modules/entity/utils';
 import { NfsFormComponent } from 'app/pages/sharing/nfs/nfs-form/nfs-form.component';
-import { WebSocketService } from 'app/services';
 import { DialogService } from 'app/services/dialog.service';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
 @Component({
@@ -24,7 +26,7 @@ export class NfsListComponent implements EntityTableConfig<NfsShare> {
   routeAddTooltip = this.translate.instant('Add Unix (NFS) Share');
   routeEdit: string[] = ['sharing', 'nfs', 'edit'];
   protected routeDelete: string[] = ['sharing', 'nfs', 'delete'];
-  entityList: EntityTableComponent;
+  entityList: EntityTableComponent<NfsShare>;
   emptyTableConfigMessages = {
     first_use: {
       title: this.translate.instant('No NFS Shares have been configured yet'),
@@ -57,11 +59,12 @@ export class NfsListComponent implements EntityTableConfig<NfsShare> {
   constructor(
     private slideInService: IxSlideInService,
     protected ws: WebSocketService,
+    private errorHandler: ErrorHandlerService,
     private dialog: DialogService,
     private translate: TranslateService,
   ) {}
 
-  afterInit(entityList: EntityTableComponent): void {
+  afterInit(entityList: EntityTableComponent<NfsShare>): void {
     this.entityList = entityList;
 
     this.slideInService.onClose$.pipe(untilDestroyed(this)).subscribe(() => {
@@ -81,21 +84,25 @@ export class NfsListComponent implements EntityTableConfig<NfsShare> {
   }
 
   doEdit(id: number): void {
-    const row = this.entityList.rows.find((row) => row.id === id);
+    const nfsShare = this.entityList.rows.find((row) => row.id === id);
     const form = this.slideInService.open(NfsFormComponent);
-    form.setNfsShareForEdit(row);
+    form.setNfsShareForEdit(nfsShare);
   }
 
-  onCheckboxChange(row: NfsShare): void {
+  onCheckboxChange(row: NfsShare, loader$: Subject<boolean>): void {
+    loader$.next(true);
     this.ws.call(this.updateCall, [row.id, { enabled: row.enabled }])
       .pipe(untilDestroyed(this))
       .subscribe({
         next: (share) => {
           row.enabled = share.enabled;
         },
-        error: (err) => {
+        error: (error: WebsocketError) => {
           row.enabled = !row.enabled;
-          new EntityUtils().handleWsError(this, err, this.dialog);
+          this.dialog.error(this.errorHandler.parseWsError(error));
+        },
+        complete: () => {
+          loader$.next(false);
         },
       });
   }
