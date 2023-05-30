@@ -19,7 +19,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QRCodeModule } from 'angular2-qrcode';
 import { NgxFilesizeModule } from 'ngx-filesize';
-import { NgxUploaderModule } from 'ngx-uploader';
 import { CoreComponents } from 'app/core/core-components.module';
 import { CommonDirectivesModule } from 'app/directives/common/common-directives.module';
 import { CastModule } from 'app/modules/cast/cast.module';
@@ -157,7 +156,6 @@ import { routing } from './system.routing';
     MatToolbarModule,
     MatListModule,
     MatButtonModule,
-    NgxUploaderModule,
     QRCodeModule,
     ReactiveFormsModule,
     routing,

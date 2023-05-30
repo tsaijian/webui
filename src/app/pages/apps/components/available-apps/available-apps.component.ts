@@ -45,7 +45,7 @@ export class AvailableAppsComponent implements AfterViewInit, OnInit {
   ngOnInit(): void {
     // For clicking the breadcrumbs link to this page
     this.router.events.pipe(
-      filter((event: RouterEvent) => event instanceof NavigationSkipped),
+      filter((event) => event instanceof NavigationSkipped),
       untilDestroyed(this),
     ).subscribe(() => {
       if (this.router.url.endsWith('/apps/available')) {

@@ -42,7 +42,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgxFilesizeModule } from 'ngx-filesize';
-import { NgxUploaderModule } from 'ngx-uploader';
 import { CommonDirectivesModule } from 'app/directives/common/common-directives.module';
 import { CastModule } from 'app/modules/cast/cast.module';
 import { EntityEmptyComponent } from 'app/modules/entity/entity-empty/entity-empty.component';
@@ -106,7 +105,6 @@ import { AppLoaderService } from 'app/services';
     MatTabsModule,
     MatChipsModule,
     MatDatepickerModule,
-    NgxUploaderModule,
     FlexLayoutModule,
     TranslateModule,
     CdkTreeModule,

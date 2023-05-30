@@ -8,7 +8,7 @@ import {
   AfterViewInit,
 } from '@angular/core';
 import {
-  Chart, ChartDataSets, ChartOptions,
+  Chart, ChartOptions,
 } from 'chart.js';
 import { Theme } from 'app/interfaces/theme.interface';
 import { ThemeService } from 'app/services/theme/theme.service';

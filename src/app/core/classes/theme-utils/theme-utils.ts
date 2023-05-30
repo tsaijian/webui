@@ -134,6 +134,8 @@ export class ThemeUtils {
     return this.adjustLightness(value, pc, 'lighten');
   }
 
+  rgbToHsl(param: string | number[], inputString: boolean, outputString: false): [number, number, number];
+  rgbToHsl(param: string | number[], inputString: boolean, outputString: true): string;
   rgbToHsl(param: string | number[], inputString = true, outputString = true): number[] | string {
     const value: number[] = inputString ? this.forceRgb(param as string) : param as number[];
 
