@@ -49,7 +49,7 @@ describe('SaveConfigDialogComponent', () => {
         transform: () => '20220524160228',
       }),
       mockProvider(StorageService, {
-        downloadUrl: jest.fn(() => of(undefined)),
+        downloadUrl: jest.fn(() => of(null)),
       }),
       mockProvider(MatDialogRef),
       mockProvider(DialogService),

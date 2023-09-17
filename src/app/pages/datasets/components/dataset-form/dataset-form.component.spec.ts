@@ -84,7 +84,7 @@ describe('DatasetFormComponent', () => {
         confirm: jest.fn(() => of(true)),
       }),
       mockProvider(DatasetFormService, {
-        ensurePathLimits: jest.fn(() => of(undefined)),
+        ensurePathLimits: jest.fn(() => of(null)),
         loadDataset: jest.fn((path) => {
           if (path === 'parent/child') {
             return of(existingDataset);

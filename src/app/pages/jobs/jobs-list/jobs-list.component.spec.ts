@@ -80,7 +80,7 @@ describe('JobsListComponent', () => {
         mockCall('core.download', [1, 'http://localhost/download/log']),
       ]),
       mockProvider(StorageService, {
-        downloadUrl: jest.fn(() => of(undefined)),
+        downloadUrl: jest.fn(() => of()),
       }),
       provideMockStore({
         selectors: [

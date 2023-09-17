@@ -50,7 +50,7 @@ describe('CustomAppButtonComponent', () => {
 
   it('disables Custom App button if pool is not set', () => {
     const store = spectator.inject(KubernetesStore);
-    Object.defineProperty(store, 'selectedPool$', { value: of(undefined) });
+    Object.defineProperty(store, 'selectedPool$', { value: of(null) });
 
     expect(button.isDisabled()).toBeTruthy();
   });

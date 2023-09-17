@@ -26,7 +26,7 @@ describe('ExportDatasetKeyDialogComponent', () => {
         mockJob('pool.dataset.export_key', fakeSuccessfulJob('12345678')),
       ]),
       mockProvider(StorageService, {
-        downloadUrl: jest.fn(() => of(undefined)),
+        downloadUrl: jest.fn(() => of()),
       }),
       mockProvider(MatDialogRef),
       {

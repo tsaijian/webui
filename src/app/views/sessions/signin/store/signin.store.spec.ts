@@ -43,7 +43,7 @@ describe('SigninStore', () => {
       mockProvider(SnackbarService),
       mockProvider(UpdateService),
       mockProvider(SystemGeneralService, {
-        loadProductType: () => of(undefined),
+        loadProductType: () => of(null),
       }),
       {
         provide: WINDOW,

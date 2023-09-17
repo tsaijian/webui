@@ -112,10 +112,10 @@ describe('VmEditFormComponent', () => {
             ],
           },
         ]),
-        addIsolatedGpuPciIds: jest.fn(() => of(undefined)),
+        addIsolatedGpuPciIds: jest.fn(() => of()),
       }),
       mockProvider(VmGpuService, {
-        updateVmGpus: jest.fn(() => of(undefined)),
+        updateVmGpus: jest.fn(() => of()),
       }),
       mockProvider(IxSlideInService),
     ],

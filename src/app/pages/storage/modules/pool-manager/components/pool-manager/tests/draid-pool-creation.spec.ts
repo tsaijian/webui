@@ -137,7 +137,7 @@ describe('PoolManagerComponent – creating dRAID pool', () => {
               ...mockEntityJobComponentRef.componentInstance,
               success: of(),
             },
-            afterClosed: () => of(undefined),
+            afterClosed: () => of(),
           };
         }),
       }),

@@ -133,7 +133,7 @@ describe('PoolManagerWizardComponent', () => {
       mockProvider(MatDialog, {
         open: jest.fn((component) => {
           if (component === DownloadKeyDialogComponent) {
-            return { afterClosed: () => of(undefined) } as MatDialogRef<DownloadKeyDialogComponent>;
+            return { afterClosed: () => of(null) } as MatDialogRef<DownloadKeyDialogComponent>;
           }
 
           return {
@@ -142,7 +142,7 @@ describe('PoolManagerWizardComponent', () => {
               ...mockEntityJobComponentRef.componentInstance,
               success: of(fakeSuccessfulJob({ id: 2, name: 'pewl' } as Pool)),
             },
-            afterClosed: () => of(undefined),
+            afterClosed: () => of(null),
           };
         }),
       }),

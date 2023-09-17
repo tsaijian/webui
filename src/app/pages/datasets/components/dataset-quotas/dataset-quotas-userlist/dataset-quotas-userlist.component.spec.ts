@@ -68,7 +68,7 @@ describe('DatasetQuotasUserlistComponent', () => {
       mockProvider(IxSlideInService, {
         onClose$: new Subject<unknown>(),
         open: jest.fn(() => ({
-          slideInClosed$: of(undefined),
+          slideInClosed$: of(),
         })),
       }),
       mockWebsocket([

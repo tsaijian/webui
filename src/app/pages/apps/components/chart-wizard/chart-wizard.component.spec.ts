@@ -379,7 +379,7 @@ describe('ChartWizardComponent', () => {
       jest.spyOn(router, 'navigate').mockImplementation();
 
       const store = spectator.inject(KubernetesStore);
-      Object.defineProperty(store, 'selectedPool$', { value: of(undefined) });
+      Object.defineProperty(store, 'selectedPool$', { value: of(null) });
       spectator.component.ngOnInit();
 
       expect(router.navigate).toHaveBeenCalledWith(['/apps/available', 'TRUENAS', 'charts', 'app_name']);
@@ -435,7 +435,7 @@ describe('ChartWizardComponent', () => {
       jest.spyOn(router, 'navigate').mockImplementation();
 
       const store = spectator.inject(KubernetesStore);
-      Object.defineProperty(store, 'selectedPool$', { value: of(undefined) });
+      Object.defineProperty(store, 'selectedPool$', { value: of(null) });
       spectator.component.ngOnInit();
 
       expect(router.navigate).toHaveBeenCalledWith(['/apps/available', 'TRUENAS', 'charts', 'ipfs']);

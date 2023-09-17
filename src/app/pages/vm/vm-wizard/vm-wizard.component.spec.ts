@@ -96,7 +96,7 @@ describe('VmWizardComponent', () => {
         getGpuOptions: () => of([
           { label: 'GeForce GTX 1080', value: '0000:03:00.0' },
         ]),
-        addIsolatedGpuPciIds: jest.fn(() => of(undefined)),
+        addIsolatedGpuPciIds: jest.fn(() => of(null)),
       }),
       mockProvider(FilesystemService, {
         getFilesystemNodeProvider: jest.fn(),
@@ -109,7 +109,7 @@ describe('VmWizardComponent', () => {
         validate: () => of(null),
       }),
       mockProvider(VmGpuService, {
-        updateVmGpus: jest.fn(() => of(undefined)),
+        updateVmGpus: jest.fn(() => of(null)),
       }),
       mockProvider(IxSlideInRef),
       { provide: SLIDE_IN_DATA, useValue: undefined },

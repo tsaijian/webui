@@ -87,9 +87,9 @@ describe('ZfsHealthCardComponent', () => {
             ] as PoolScrubTask[]);
           }
 
-          return of(undefined);
+          return of();
         }),
-        startJob: jest.fn(() => of(undefined)),
+        startJob: jest.fn(() => of()),
       }),
     ],
     declarations: [
