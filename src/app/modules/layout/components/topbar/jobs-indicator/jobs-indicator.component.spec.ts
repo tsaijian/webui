@@ -33,7 +33,7 @@ describe('JobsIndicatorComponent', () => {
       }),
       mockProvider(MatDialog, {
         open: jest.fn(() => ({
-          beforeClosed: () => of(),
+          beforeClosed: () => of(null),
         })),
       }),
     ],
