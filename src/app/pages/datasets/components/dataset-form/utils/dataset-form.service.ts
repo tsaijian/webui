@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  Observable, of, OperatorFunction, pipe,
+  EMPTY,
+  Observable, OperatorFunction, pipe,
 } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { maxDatasetNesting, maxDatasetPath } from 'app/constants/dataset.constants';
@@ -26,7 +27,7 @@ export class DatasetFormService {
 
   ensurePathLimits(parentPath: string): Observable<unknown> {
     if (!parentPath) {
-      return of(undefined);
+      return EMPTY;
     }
 
     if (parentPath.length >= maxDatasetPath) {
@@ -47,7 +48,7 @@ export class DatasetFormService {
       );
     }
 
-    return of(undefined);
+    return EMPTY;
   }
 
   loadDataset(datasetId: string): Observable<Dataset> {

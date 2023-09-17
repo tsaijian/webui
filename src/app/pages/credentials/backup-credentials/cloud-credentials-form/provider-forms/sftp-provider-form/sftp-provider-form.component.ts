@@ -4,7 +4,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { KeychainCredentialType } from 'app/enums/keychain-credential-type.enum';
 import { idNameArrayToOptions } from 'app/helpers/operators/options.operators';
@@ -36,7 +36,7 @@ export class SftpProviderFormComponent extends BaseProviderFormComponent impleme
 
   beforeSubmit(): Observable<unknown> {
     if (this.form.value.private_key !== newOption) {
-      return of(undefined);
+      return EMPTY;
     }
 
     return this.makeNewKeypair();

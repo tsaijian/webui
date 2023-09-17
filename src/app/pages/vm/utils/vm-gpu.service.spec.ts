@@ -1,6 +1,8 @@
 import { createServiceFactory, SpectatorService, SpyObject } from '@ngneat/spectator';
 import { mockProvider } from '@ngneat/spectator/jest';
 import { lastValueFrom, of } from 'rxjs';
+import { TestScheduler } from 'rxjs/testing';
+import { getTestScheduler } from 'app/core/testing/utils/get-test-scheduler.utils';
 import { mockCall, mockWebsocket } from 'app/core/testing/utils/mock-websocket.utils';
 import { VmDeviceType } from 'app/enums/vm.enum';
 import { Device } from 'app/interfaces/device.interface';
@@ -12,6 +14,7 @@ import { WebSocketService } from 'app/services/ws.service';
 describe('VmGpuService', () => {
   let spectator: SpectatorService<VmGpuService>;
   let websocket: SpyObject<WebSocketService>;
+  let testScheduler: TestScheduler;
 
   const radeon = {
     addr: {
@@ -85,6 +88,7 @@ describe('VmGpuService', () => {
   beforeEach(() => {
     spectator = createService();
     websocket = spectator.inject(WebSocketService);
+    testScheduler = getTestScheduler();
   });
 
   describe('updateVmGpus', () => {
@@ -129,10 +133,10 @@ describe('VmGpuService', () => {
       }]);
     });
 
-    it('does nothing when already existing VM PCI devices match selected GPUs', async () => {
-      await lastValueFrom(spectator.service.updateVmGpus(vm, ['0000:02:00.0']));
-
-      expect(websocket.call).not.toHaveBeenCalled();
+    it('does nothing when already existing VM PCI devices match selected GPUs', () => {
+      testScheduler.run(({ expectObservable }) => {
+        expectObservable(spectator.service.updateVmGpus(vm, ['0000:02:00.0'])).toBe('|');
+      });
     });
   });
 });

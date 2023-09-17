@@ -1,6 +1,6 @@
 import { FormGroup } from '@angular/forms';
 import _ from 'lodash';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { helptextSystemCloudcredentials as helptext } from 'app/helptext/system/cloud-credentials';
 import { CloudCredential } from 'app/interfaces/cloud-sync-task.interface';
 import { CloudsyncProvider } from 'app/interfaces/cloudsync-provider.interface';
@@ -18,7 +18,7 @@ export abstract class BaseProviderFormComponent<T = CloudCredential['attributes'
    * TODO: Consider making this functionality part of the private key select.
    */
   beforeSubmit(): Observable<unknown> {
-    return of(undefined);
+    return EMPTY;
   }
 
   getSubmitAttributes(): T {

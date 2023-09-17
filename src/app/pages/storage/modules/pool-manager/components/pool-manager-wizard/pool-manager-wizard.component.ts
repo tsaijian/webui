@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, of } from 'rxjs';
+import { EMPTY, combineLatest } from 'rxjs';
 import {
   filter, map, switchMap, tap,
 } from 'rxjs/operators';
@@ -127,7 +127,7 @@ export class PoolManagerWizardComponent implements OnInit, OnDestroy {
     dialogRef.componentInstance.success.pipe(
       switchMap((job: Job<Pool>) => {
         if (!this.hasEncryption) {
-          return of(undefined);
+          return EMPTY;
         }
 
         return this.matDialog.open<DownloadKeyDialogComponent, DownloadKeyDialogParams>(DownloadKeyDialogComponent, {
@@ -137,11 +137,11 @@ export class PoolManagerWizardComponent implements OnInit, OnDestroy {
       }),
       untilDestroyed(this),
     )
-      .subscribe(() => {
+      .subscribe({ complete: () => {
         dialogRef.close(false);
         this.snackbar.success(this.translate.instant('Pool created successfully'));
         this.router.navigate(['/storage']);
-      });
+      } });
 
     dialogRef.componentInstance.submit();
   }

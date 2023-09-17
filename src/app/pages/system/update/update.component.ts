@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { filter, pairwise, tap } from 'rxjs/operators';
 import { JobState } from 'app/enums/job-state.enum';
 import { ProductType } from 'app/enums/product-type.enum';
@@ -588,7 +588,7 @@ export class UpdateComponent implements OnInit {
 
   private saveConfigurationIfNecessary(): Observable<void> {
     if (this.wasConfigurationSaved) {
-      return of(undefined);
+      return EMPTY;
     }
 
     return this.matDialog.open(SaveConfigDialogComponent, {

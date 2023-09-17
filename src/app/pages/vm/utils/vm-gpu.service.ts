@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import _ from 'lodash';
 import {
-  forkJoin, Observable, of, switchMap,
+  EMPTY,
+  forkJoin, Observable, switchMap,
 } from 'rxjs';
 import { VmDeviceType } from 'app/enums/vm.enum';
 import { Device, PciDevice } from 'app/interfaces/device.interface';
@@ -41,7 +42,7 @@ export class VmGpuService {
         const gpusToRemove = this.subtractGpus(previousGpus, newGpus);
 
         if (!gpusToAdd.length && !gpusToRemove.length) {
-          return of(undefined);
+          return EMPTY;
         }
 
         return forkJoin([
