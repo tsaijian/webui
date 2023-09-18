@@ -96,7 +96,7 @@
                   <strong> {{ 'Highest Usage' | translate }}: </strong>
                 </span>
 
-                <ng-container *ngIf="usageMax > 0; else noDataProvided">
+                <ng-container *ngIf="usageMax || usageMax === 0; else noDataProvided">
                   {{ usageMax }}% &nbsp;
                   <span class="subtext">
                     ({{
@@ -211,7 +211,7 @@
               </ng-container>
               <mat-list-item>
                 <span class="label">{{ 'Highest Usage:' | translate }}</span>
-                <ng-container *ngIf="usageMax > 0; else noDataProvided">
+                <ng-container *ngIf="usageMax || usageMax === 0; else noDataProvided">
                   {{ usageMax }}% &nbsp;&nbsp;
                   <span class="subtext">
                     ({{
