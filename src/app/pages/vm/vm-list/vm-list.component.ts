@@ -5,9 +5,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, switchMap } from 'rxjs/operators';
 import { EmptyType } from 'app/enums/empty-type.enum';
-import { ProductType } from 'app/enums/product-type.enum';
 import { ServiceStatus } from 'app/enums/service-status.enum';
-import { VmBootloader, VmDeviceType } from 'app/enums/vm.enum';
+import { VmDeviceType } from 'app/enums/vm.enum';
 import globalHelptext from 'app/helptext/global-helptext';
 import helptext from 'app/helptext/vm/vm-list';
 import wizardHelptext from 'app/helptext/vm/vm-wizard/vm-wizard';
@@ -198,26 +197,17 @@ export class VmListComponent implements EntityTableConfig<VirtualMachineRow> {
 
   checkDisplay(vm: VirtualMachine | VirtualMachineRow): boolean {
     const devices = vm.devices;
-    if (!devices?.length) {
-      return false;
-    }
-    for (const device of devices) {
-      if (devices && device.dtype === VmDeviceType.Display) {
-        return true;
-      }
-    }
 
-    return false;
+    return !!devices?.length && devices.some((device) => device.dtype === VmDeviceType.Display);
   }
 
   getDisplayPort(vm: VirtualMachine): boolean | number {
     const devices = vm.devices;
-    if (!devices || devices.length === 0) {
+
+    if (!devices?.length) {
       return false;
     }
-    if (this.productType !== ProductType.Scale && ([VmBootloader.Grub, VmBootloader.UefiCsm].includes(vm.bootloader))) {
-      return false;
-    }
+
     for (const device of devices) {
       if (devices && device.dtype === VmDeviceType.Display) {
         return (device.attributes).port;
