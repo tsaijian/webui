@@ -198,10 +198,7 @@ export class VmListComponent implements EntityTableConfig<VirtualMachineRow> {
 
   checkDisplay(vm: VirtualMachine | VirtualMachineRow): boolean {
     const devices = vm.devices;
-    if (!devices || devices.length === 0) {
-      return false;
-    }
-    if (this.productType !== ProductType.Scale && ([VmBootloader.Grub, VmBootloader.UefiCsm].includes(vm.bootloader))) {
+    if (!devices?.length) {
       return false;
     }
     for (const device of devices) {
