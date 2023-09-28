@@ -269,7 +269,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   }
 
   private subscribeToResourceUsageUpdates(): void {
-    this.resourcesUsageStore$.subscribeToResourceUsageUpdates().pipe(untilDestroyed(this)).subscribe();
+    this.resourcesUsageStore$.getResourceUsageUpdates().pipe(untilDestroyed(this)).subscribe();
   }
 
   showConfigForm(): void {
