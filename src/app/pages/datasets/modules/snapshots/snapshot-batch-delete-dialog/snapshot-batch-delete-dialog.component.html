@@ -39,25 +39,21 @@
   <div class="form-actions">
     <ix-checkbox
       formControlName="confirm"
-      [label]="'Confirm' | translate"
+      [style.width.%]="100"
+      [label]="hasClones ? ('Remove also dependent clones' | translate) : ('Confirm' | translate)"
       [required]="true"
     ></ix-checkbox>
 
     <div class="form-buttons">
-      <div
-        [matTooltip]="'Snapshots must not have dependent clones' | translate"
-        [matTooltipDisabled]="!hasClones"
+      <button
+        mat-button
+        type="submit"
+        color="primary"
+        ixTest="delete"
+        [disabled]="form.invalid"
       >
-        <button
-          mat-button
-          type="submit"
-          color="primary"
-          ixTest="delete"
-          [disabled]="form.invalid || hasClones"
-        >
-          {{ 'Delete' | translate }}
-        </button>
-      </div>
+        {{ 'Delete' | translate }}
+      </button>
       <button mat-button type="button" matDialogClose ixTest="cancel">
         {{ 'Cancel' | translate }}
       </button>
