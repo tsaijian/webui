@@ -36,11 +36,17 @@
     </mat-expansion-panel>
   </mat-accordion>
 
+  <ix-checkbox
+    *ngIf="hasClones"
+    formControlName="defer"
+    [style.margin-bottom.px]="10"
+    [label]="'Remove also dependent clones' | translate"
+  ></ix-checkbox>
+
   <div class="form-actions">
     <ix-checkbox
       formControlName="confirm"
-      [style.width.%]="100"
-      [label]="hasClones ? ('Remove also dependent clones' | translate) : ('Confirm' | translate)"
+      [label]="'Confirm' | translate"
       [required]="true"
     ></ix-checkbox>
 

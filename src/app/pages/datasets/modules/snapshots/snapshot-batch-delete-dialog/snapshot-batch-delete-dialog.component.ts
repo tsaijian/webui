@@ -26,6 +26,7 @@ export class SnapshotBatchDeleteDialogComponent implements OnInit {
   isJobCompleted = false;
   form = this.fb.group({
     confirm: [false, [Validators.requiredTrue]],
+    defer: [false],
   });
   total = this.snapshots.length;
   dialogData: SnapshotDialogData;
@@ -66,7 +67,8 @@ export class SnapshotBatchDeleteDialogComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const snapshots = this.snapshots.map((item) => this.hasClones ? [item.name, { defer: true }] : [item.name]);
+    const isDefer = this.hasClones && this.form.value.defer;
+    const snapshots = this.snapshots.map((item) => isDefer ? [item.name, { defer: true }] : [item.name]);
     const params: CoreBulkQuery = ['zfs.snapshot.delete', snapshots];
     this.websocket.job('core.bulk', params).pipe(
       filter((job: Job<CoreBulkResponse<boolean>[]>) => !!job.result),

@@ -98,12 +98,13 @@ export class SnapshotDetailsRowComponent implements OnInit, OnDestroy {
       title: this.translate.instant('Delete'),
       message: this.translate.instant('Delete snapshot {name}?', { name: snapshot.name }),
       buttonText: this.translate.instant('Delete'),
-      confirmationCheckboxText:
-        this.hasClones ? this.translate.instant('Remove also dependent clones') : this.translate.instant('Confirm'),
+      secondaryCheckbox: this.hasClones || undefined,
+      secondaryCheckboxText: this.translate.instant('Remove also dependent clones'),
     }).pipe(
       filter(Boolean),
-      switchMap(() => {
-        return this.ws.call('zfs.snapshot.delete', this.hasClones ? [snapshot.name, { defer: true }] : [snapshot.name]).pipe(
+      switchMap((result) => {
+        const isDefer = this.hasClones && result.secondaryCheckbox;
+        return this.ws.call('zfs.snapshot.delete', isDefer ? [snapshot.name, { defer: true }] : [snapshot.name]).pipe(
           this.loader.withLoader(),
           this.errorHandler.catchError(),
           tap(() => {
