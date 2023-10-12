@@ -91,6 +91,7 @@ export class IscsiCardComponent implements OnInit {
 
   private getIscsiTargets(): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.ws.call('iscsi.target.query').pipe(
       untilDestroyed(this),
     ).subscribe((iscsiShares: IscsiTarget[]) => {
