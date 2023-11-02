@@ -1,70 +1,180 @@
-<ix-fake-progress-bar [loading]="isLoading"></ix-fake-progress-bar>
+<ng-container *ngIf="false">
+  <ix-fake-progress-bar [loading]="isLoading"></ix-fake-progress-bar>
 
-<h1 matDialogTitle>{{ 'How would you rate this page?' | translate }}</h1>
+  <h1 matDialogTitle>{{ 'How would you rate this page?' | translate }}</h1>
 
-<mat-dialog-content>
-  <button
-    mat-icon-button
-    mat-dialog-close
-    class="close-feedback-dialog"
-    ixTest="close-feedback-dialog"
-  >
-    <ix-icon name="clear"></ix-icon>
-  </button>
-
-  <div class="file-ticket-helper">
-    <span>{{ 'Submitting a bug?' | translate }}</span>
-    <span>{{ 'Use' | translate }}</span>
-    <a
-      class="file-ticket-link"
-      ixTest="file-ticket"
-      (click)="openFileTicketForm()"
-    >{{ 'File Ticket' | translate }}</a>
-    <span>{{ 'form instead' | translate }}.</span>
-  </div>
-
-  <form [formGroup]="form">
-    <ix-star-rating
-      formControlName="rating"
-      [label]="'Select rating' | translate"
-      [required]="true"
-    ></ix-star-rating>
-
-    <ix-textarea
-      formControlName="message"
-      [label]="'Message' | translate"
-      [rows]="5"
-      [placeholder]="'Share your thoughts on our product\'s features, usability, or any suggestions for improvement.' | translate"
-    ></ix-textarea>
-
-    <ix-slide-toggle
-      formControlName="take_screenshot"
-      [label]="'Take screenshot of the current page' | translate"
-      [tooltip]="'Capture and attach screenshot to the review' | translate"
-    ></ix-slide-toggle>
-
-    <ix-file-input
-      *ngIf="!form.controls.take_screenshot.value"
-      formControlName="image"
-      [label]="'Attach image (optional)' | translate"
-      [tooltip]="'Select image you want attach to review' | translate"
-      [multiple]="false"
-      [acceptedFiles]="acceptedFiles"
-    ></ix-file-input>
-  </form>
-</mat-dialog-content>
-
-<mat-dialog-actions>
-  <ix-form-actions>
+  <mat-dialog-content>
     <button
-      mat-button
-      type="submit"
-      color="primary"
-      ixTest="submit"
-      [disabled]="form.invalid || isLoading"
-      (click)="onSubmit()"
+      mat-icon-button
+      mat-dialog-close
+      class="close-feedback-dialog"
+      ixTest="close-feedback-dialog"
     >
-      {{ 'Submit' | translate }}
+      <ix-icon name="clear"></ix-icon>
     </button>
-  </ix-form-actions>
-</mat-dialog-actions>
+
+    <form [formGroup]="form">
+      <ix-star-rating
+        formControlName="rating"
+        [label]="'Select rating' | translate"
+        [required]="true"
+      ></ix-star-rating>
+
+      <div class="i-want-to-buttons">
+        <div class="i-want-to">I'd like to:</div>
+        <mat-button-toggle-group name="fontStyle" aria-label="Font Style">
+          <mat-button-toggle value="bold">voice my opinion</mat-button-toggle>
+          <mat-button-toggle value="italic">report a bug</mat-button-toggle>
+          <mat-button-toggle value="underline">suggest an improvement</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <ix-input
+        formControlName="message"
+        class="subject"
+        [label]="'Subject' | translate"
+      ></ix-input>
+
+      <ix-textarea
+        formControlName="message"
+        [label]="'Message' | translate"
+        [rows]="5"
+        [placeholder]="'Share your thoughts on our product\'s features, usability, or any suggestions for improvement.' | translate"
+      ></ix-textarea>
+
+      <ix-checkbox
+        formControlName="take_screenshot"
+        [label]="'Login to Jira' | translate"
+        [tooltip]="'Capture and attach screenshot to the review' | translate"
+      ></ix-checkbox>
+
+      <div class="hint">
+        By logging in to Jira you will receive updates about your issue and give us an opportunity to ask questions if more information is required.
+      </div>
+
+      <ix-checkbox
+        formControlName="take_screenshot"
+        [label]="'Take screenshot of the current page' | translate"
+        [tooltip]="'Capture and attach screenshot to the review' | translate"
+      ></ix-checkbox>
+
+      <ix-checkbox
+        formControlName="take_screenshot"
+        [label]="'Attach debug' | translate"
+        [tooltip]="'Capture and attach screenshot to the review' | translate"
+      ></ix-checkbox>
+
+      <div class="hint">
+        Debugs may contain log files with personal information such as usernames or other identifying information about your system.
+        <a href="http://google.com" ixTest="learn-more">Learn more.</a>
+      </div>
+
+      <ix-file-input
+        *ngIf="!form.controls.take_screenshot.value"
+        formControlName="image"
+        [label]="'Attach image (optional)' | translate"
+        [tooltip]="'Select image you want attach to review' | translate"
+        [multiple]="false"
+        [acceptedFiles]="acceptedFiles"
+      ></ix-file-input>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <ix-form-actions>
+      <button
+        mat-button
+        type="submit"
+        color="primary"
+        ixTest="submit"
+        [disabled]="form.invalid || isLoading"
+        (click)="onSubmit()"
+      >
+        {{ 'Login To Jira' | translate }}
+      </button>
+    </ix-form-actions>
+  </mat-dialog-actions>
+</ng-container>
+
+<ng-container *ngIf="true">
+  <h1 matDialogTitle>{{ 'New Issue' | translate }}</h1>
+
+  <mat-dialog-content>
+    <button
+      mat-icon-button
+      mat-dialog-close
+      class="close-feedback-dialog"
+      ixTest="close-feedback-dialog"
+    >
+      <ix-icon name="clear"></ix-icon>
+    </button>
+
+    <form class="second-screen" [formGroup]="form">
+      <div class="your-issue-prompt">
+        Your issue:
+      </div>
+      <div class="your-issue-body">
+        <div class="your-issue-title">SATA temperatures missing</div>
+        <div class="your-issue-text">
+          <p>Since upgrading from Bluefin 22.12.3.2 to Cobia 23.10.0, my SATA drives no longer report any temperature. The temperature values are missing from the Dashboard and missing from the Reporting area.</p>
+          <p>I am very concerned that this issue will also prevent temperature alerts from being generated in the event of an overheating scenario.</p>
+        </div>
+      </div>
+
+      <div class="similar-already-exist">
+        The following issues were already reported. <br>
+        Do any of them look similar?
+      </div>
+
+      <div class="issues">
+        <div class="issue">
+          <a href="http://google.com" ixTest="issue-sata">SATA Disk Temperatures Missing After Upgrade from Bluefin to Cobia</a>
+          <div class="issue-icon"></div>
+          <div class="issue-description">
+            <p>The temperature readings of my SATA drives have ceased to appear. Notably, this lack of data is evident in the Dashboard and the Report... </p>
+          </div>
+        </div>
+        <div class="issue">
+          <a href="http://google.com" ixTest="issue-high-hdd">High hdd temperature in gui</a>
+          <div class="issue-icon"></div>
+          <div class="issue-description">
+            <p>
+              Even with last update hdd temps always high in GUI but correct if i use shell command. Problem is present only on...
+            </p>
+          </div>
+        </div>
+        <div class="issue">
+          <a href="http://google.com" ixTest="issue-fix-netdata">Fix netdata disk temperature graph plugin</a>
+          <div class="issue-icon"></div>
+          <div class="issue-description">
+            <p>
+              24.04 PR: https://github.com/truenas/middleware/pull/12362 <br>
+              This commit fixes an issue where if the netdata call failed for whatever...
+            </p>
+          </div>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <ix-form-actions>
+      <button
+        mat-button
+        ixTest="submit"
+        (click)="onSubmit()"
+      >
+        {{ 'Back' | translate }}
+      </button>
+      <button
+        mat-button
+        type="submit"
+        color="primary"
+        ixTest="submit"
+        (click)="onSubmit()"
+      >
+        {{ 'Create Ticket' | translate }}
+      </button>
+    </ix-form-actions>
+  </mat-dialog-actions>
+</ng-container>

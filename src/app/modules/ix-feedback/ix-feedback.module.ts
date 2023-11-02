@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule } from '@ngx-translate/core';
@@ -26,6 +27,7 @@ import { FileTicketModule } from 'app/pages/system/file-ticket/file-ticket.modul
     MatTooltipModule,
     TestIdModule,
     AppLoaderModule,
+    MatButtonToggleModule,
   ],
   declarations: [
     FeedbackDialogComponent,
