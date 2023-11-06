@@ -1,4 +1,5 @@
-<ng-container *ngIf="false">
+<!-- See another condition below -->
+<ng-container *ngIf="true">
   <ix-fake-progress-bar [loading]="isLoading"></ix-fake-progress-bar>
 
   <h1 matDialogTitle>{{ 'How would you rate this page?' | translate }}</h1>
@@ -14,20 +15,20 @@
     </button>
 
     <form [formGroup]="form">
+      <div class="i-want-to-buttons">
+        <div class="i-want-to">I'd like to:</div>
+        <mat-button-toggle-group name="fontStyle" aria-label="Font Style">
+          <mat-button-toggle value="bold">rate this page</mat-button-toggle>
+          <mat-button-toggle value="italic">report a bug</mat-button-toggle>
+          <mat-button-toggle value="underline">suggest an improvement</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
       <ix-star-rating
         formControlName="rating"
         [label]="'Select rating' | translate"
         [required]="true"
       ></ix-star-rating>
-
-      <div class="i-want-to-buttons">
-        <div class="i-want-to">I'd like to:</div>
-        <mat-button-toggle-group name="fontStyle" aria-label="Font Style">
-          <mat-button-toggle value="bold">voice my opinion</mat-button-toggle>
-          <mat-button-toggle value="italic">report a bug</mat-button-toggle>
-          <mat-button-toggle value="underline">suggest an improvement</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
 
       <ix-input
         formControlName="message"
@@ -44,12 +45,13 @@
 
       <ix-checkbox
         formControlName="take_screenshot"
-        [label]="'Login to Jira' | translate"
+        [label]="'Attach debug' | translate"
         [tooltip]="'Capture and attach screenshot to the review' | translate"
       ></ix-checkbox>
 
       <div class="hint">
-        By logging in to Jira you will receive updates about your issue and give us an opportunity to ask questions if more information is required.
+        Debugs may contain log files with personal information such as usernames or other identifying information about your system.
+        <a href="http://google.com" ixTest="learn-more">Learn more.</a>
       </div>
 
       <ix-checkbox
@@ -59,15 +61,10 @@
       ></ix-checkbox>
 
       <ix-checkbox
-        formControlName="take_screenshot"
-        [label]="'Attach debug' | translate"
-        [tooltip]="'Capture and attach screenshot to the review' | translate"
+        formControlName="extra_images"
+        [label]="'Attach additional images [Select]' | translate"
+        [tooltip]="'' | translate"
       ></ix-checkbox>
-
-      <div class="hint">
-        Debugs may contain log files with personal information such as usernames or other identifying information about your system.
-        <a href="http://google.com" ixTest="learn-more">Learn more.</a>
-      </div>
 
       <ix-file-input
         *ngIf="!form.controls.take_screenshot.value"
@@ -96,7 +93,7 @@
   </mat-dialog-actions>
 </ng-container>
 
-<ng-container *ngIf="true">
+<ng-container *ngIf="false">
   <h1 matDialogTitle>{{ 'New Issue' | translate }}</h1>
 
   <mat-dialog-content>

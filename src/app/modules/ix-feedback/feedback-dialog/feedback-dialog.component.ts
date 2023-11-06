@@ -38,6 +38,7 @@ export class FeedbackDialogComponent implements OnInit {
     message: [''],
     image: [null as File[]],
     take_screenshot: [true],
+    extra_images: [false],
   });
   private release: string;
   private hostId: string;
