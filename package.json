@@ -205,5 +205,8 @@
     ],
     "*.html": "markuplint",
     "*.scss": "stylelint --fix"
+  },
+  "overrides": {
+     "parcel/watcher": "2.1.0"
   }
 }
